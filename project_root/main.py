@@ -1,11 +1,11 @@
+from pathlib import Path
 from src.extract.CSVExtractor import CSVExtractor
 
-extractor = CSVExtractor("C:/Users/danie/Documents/matfyz_3_semester/rocnikovy_projekt/git clone/Rocnikovy_projekt/project_root/data/raw/Beach_Water_Quality_-_Automated_Sensors_20251016.csv")
-
-extractor.getInitialChunk()
+csv_file_path = Path(__file__).parent / "data" / "raw" / "Beach_Water_Quality_-_Automated_Sensors_20251016.csv"
+extractor = CSVExtractor(csv_file_path)
 
 while True:
-    chunk = extractor.getChunk()
+    chunk = extractor.getNextChunk()
     if not chunk:
         break
     print(chunk)
