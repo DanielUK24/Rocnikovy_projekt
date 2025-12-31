@@ -1,12 +1,90 @@
 {
-  "chunk_size": 30,
+  "chunk_size": 5,
   "max_approximated": 5,
   "measurements": [
-    {"id": 0, "type":"Water", "path": "data/raw/example01.csv"},
-    {"id": 1, "type":"Weather", "path": ""}
+    {
+      "id": 0, 
+      "type":"Water", 
+      "path": "data/raw/example01.csv",
+      "target_facts": {
+        "target_table": "Measurements", 
+        "source_columns": [
+          "Beach Name",
+          "Measurement Timestamp",
+          "Water Temperature",
+          "Turbidity",
+          "Transducer Depth",
+          "Wave Height",
+          "Wave Period",
+          "Battery Life"
+        ]
+      },
+      "target_dimensions" : [
+        {
+          "target_table": "Sensor",
+          "source_column": "Beach Name",
+          "source_codelist_id": 0,
+          "join_column_measurements": "Beach Name",
+          "join_column_codelist": "Sensor Type",
+          "codelist_accumulator_keys_column": "Sensor Name",
+          "accumulator": "yes"
+        },
+        {
+          "target_table": "Timestamp",
+          "source_column": "Measurement Timestamp",
+          "time_dimension": "yes"
+        }
+      ]
+      
+    },
+    {
+      "id": 1, 
+      "type": "Weather", 
+      "path": "",
+      "target_facts": {
+        "target_table": "Measurements",
+        "source_columns": [
+          "Station Name",
+          "Measurement Timestamp",
+          "Air Temperature",
+          "Wet Bulb Temperature",
+          "Humidity",
+          "Rain Intensity",
+          "Interval Rain",
+          "Total Rain",
+          "Precipitation Type",
+          "Wind Direction",
+          "Wind Speed",
+          "Maximum Wind Speed",
+          "Barometric Pressure",
+          "Solar Radiation",
+          "Heading",
+          "Battery Life"
+        ]
+      },
+      "target_dimensions" : [
+        {
+          "target_table": "Sensor",
+          "source_column": "Station Name",
+          "source_codelist_id": 0,
+          "join_column_measurements": "Station Name",
+          "join_column_codelist": "Sensor Type",
+          "codelist_accumulator_keys_column": "Sensor Name",
+          "accumulator": "yes"
+        },
+        {
+          "target_table": "Timestamp",
+          "source_column": "Measurement Timestamp",
+          "time_dimension": "yes"
+        }
+      ]
+    }
   ],
   "codelists": [
-    {"id": 0, "name": "sensors", "path": "data/raw/Beach_Water_and_Weather_Sensor_Locations_20251218.csv"}
+    {
+      "id": 0, 
+      "name": "sensors", 
+      "path": "data/raw/Beach_Water_and_Weather_Sensor_Locations_20251218.csv"}
   ],
   "active_measurement": 0
 }

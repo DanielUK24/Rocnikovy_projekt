@@ -10,12 +10,12 @@ class CSVExtractor:
         self._iterator = iter(reader)
 
     def get_next_row(self):
-        row = []
+        row = None
         try:
-            row.append(next(self._iterator))
+            row = next(self._iterator)
         except StopIteration:
             pass
-        return row if row else None
+        return row
     
     def close(self):
         self._file.close()
