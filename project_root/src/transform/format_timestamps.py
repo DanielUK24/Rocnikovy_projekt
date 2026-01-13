@@ -1,8 +1,8 @@
 from dateutil import parser
 
-def format_timestamps(chunk, source_column):
+def format_timestamps(chunk, time_source_column):
 
     for row in chunk:
-        row[source_column] = parser.parse(row[source_column])
+        row[time_source_column] = parser.parse(row[time_source_column])
 
     return chunk
