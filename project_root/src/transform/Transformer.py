@@ -1,9 +1,10 @@
 from src.extract.CSVExtractor import CSVExtractor
 from src.transform.select_chosen_columns import select_chosen_columns
 from src.transform.format_timestamps import format_timestamps
+from src.transform.remove_duplicates import remove_duplicates
+from src.transform.convert_measurement_values_to_float_or_nan import convert_measurement_values_to_float_or_nan
 from dateutil import parser # dtd probably can be delete
 import json
-
 
 class Transformer:
 
@@ -72,22 +73,31 @@ class Transformer:
                   if not row:
                         break
                   chunk_accumulators[row[join_column_measurements]].append(row)
+
+                  # when an accumulator reaches chunk_size, we start transformations
                   if len(chunk_accumulators[row[join_column_measurements]]) >= chunk_size:
                         
-                        # transformations
-                        chunk = select_chosen_columns(chunk_accumulators[row[join_column_measurements]], self._config["measurements"][self._active_measurement]["target_facts"]["source_columns"])
+
+                        accumulator = chunk_accumulators[row[join_column_measurements]]
+                        chosen_columns = self._config["measurements"][self._active_measurement]["target_facts"]["source_columns"]
+                        chunk = select_chosen_columns(accumulator, chosen_columns)
 
                         time_source_column = self._config["measurements"][self._active_measurement]["target_dimensions"][1]["source_column"]
                         chunk = format_timestamps(chunk, time_source_column)
                         chunk = sorted(chunk, key=lambda d: d[time_source_column], reverse=True)
-
-                        
-
+                        convert_measurement_values_to_float_or_nan(chunk, join_column_measurements, time_source_column)
                         print(chunk,"\n\n\n\n\n")
 
+                        columns_with_measurements = chosen_columns.copy()
+                        columns_with_measurements.remove(join_column_measurements)
+                        columns_with_measurements.remove(time_source_column)
+                        chunk = remove_duplicates(chunk, join_column_measurements, time_source_column)
+
+                        print("Transformed chunk:")
+                        for row in chunk:
+                              print(row)
                         # empty accumulator
                         del chunk_accumulators[row[join_column_measurements]][:]
-
                   
             for accumulator in chunk_accumulators.values():
                   if len(accumulator) > 0:

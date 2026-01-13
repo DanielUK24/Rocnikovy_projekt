@@ -35,7 +35,7 @@ def _add_missing_rows(self, chunk, common_difference, max_approximated, time_sou
             continue
         
         middle_row = self._create_middle_row(act, next)
-        act_time = parser.parse(act[time_source_column])
+        act_time = act[time_source_column]
         number_of_missing_rows = dif%common_difference
 
         for j in range(number_of_missing_rows):

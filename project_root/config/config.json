@@ -1,11 +1,12 @@
 {
-  "chunk_size": 5,
+  "chunk_size": 23,
   "max_approximated": 5,
+  "active_measurement": 0,
   "measurements": [
     {
       "id": 0, 
       "type":"Water", 
-      "path": "data/raw/example01.csv",
+      "path": "data/raw/exampl02_duplicates.csv",
       "target_facts": {
         "target_table": "Measurements", 
         "source_columns": [
@@ -85,6 +86,5 @@
       "id": 0, 
       "name": "sensors", 
       "path": "data/raw/Beach_Water_and_Weather_Sensor_Locations_20251218.csv"}
-  ],
-  "active_measurement": 0
+  ]
 }
