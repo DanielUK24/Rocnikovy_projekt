@@ -40,7 +40,6 @@ def approximate_missing_values_rows(chunk, join_column_measurements, time_column
         else:
             # eventually add two nan lines
             after_approximation = approximate(buffer, time_column, max_approximated, freq)
-            #print("AFTER APROXIMATION:\n", after_approximation)
             new_chunk.extend(after_approximation)
             middle_line[time_column] = after_approximation[-1][time_column] - pandas.Timedelta(freq)
             new_chunk.append(middle_line.copy())
