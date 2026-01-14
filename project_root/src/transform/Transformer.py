@@ -14,11 +14,6 @@ class Transformer:
 
       def __init__(self, config_file):
 
-           #self._chunk_size = self._config.get("chunk_size")
-           #if self._chunk_size is None:
-            #raise ValueError("chunk_size must be specified in config.json")
-      
-
            self._config = self._load_config(config_file)
            self._active_measurement = self._config.get("active_measurement")
            active_measurement_path = self._config.get("measurements")[self._active_measurement].get("path")
@@ -78,7 +73,7 @@ class Transformer:
             remove_out_of_range_values(chunk, source_columns)
             chunk = remove_duplicates(chunk, join_column_measurements, time_source_column)
             #chunk = remove_rows_with_all_nans(chunk, source_columns_names)
-            # dtd edit arguments
+            # edit argument
             chunk = approximate_missing_values_rows(chunk, join_column_measurements, time_source_column, source_columns_names, max_approximated, "1h")
             
             pandas.set_option("display.max_rows", None)
