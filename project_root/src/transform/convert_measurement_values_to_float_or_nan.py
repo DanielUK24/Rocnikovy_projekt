@@ -10,9 +10,10 @@ def convert_measurement_values_to_float_or_nan(chunk, join_column_measurements, 
                 row[attribute] = numpy.nan
                 continue
             try:
-                row[attribute] = float(row[attribute])
+                row[attribute] = float(row[attribute].replace(",",""))
             except:
                 # dtd throw an exception
+                print("cannot be converted:", row[attribute])
                 pass
 
             

@@ -1,12 +1,12 @@
 {
-  "chunk_size": 15,
+  "chunk_size": 30,
   "max_approximated": 5,
   "active_measurement": 0,
   "measurements": [
     {
       "id": 0, 
       "type":"Water", 
-      "path": "data/raw/example_values_out_of_range.csv",
+      "path": "data/raw/Beach_Water_Quality_-_Automated_Sensors_20251016.csv",
       "target_facts": {
         "target_table": "Measurements", 
         "source_columns": [

@@ -9,5 +9,5 @@ def remove_duplicates(chunk, join_column_measurements, time_source_column):
         .groupby([join_column_measurements, time_source_column], as_index=False)
         .agg({column: "mean" for column in numeric_columns})
     )
-
+    result = result.sort_values(time_source_column, ascending=False)
     return result.to_dict("records")
