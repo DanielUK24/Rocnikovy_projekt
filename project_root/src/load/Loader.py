@@ -1,11 +1,12 @@
 import psycopg2
+import os
 from datetime import datetime
+from dotenv import load_dotenv, dotenv_values
 
 class Loader:
 
     def __init__(self, config):
         # check which variables do not have to be instance variables
-        self._config = config
 
         active_measurement = config["active_measurement"]
         source_columns_dict = config["measurements"][active_measurement]["target_facts"]["source_columns"]
@@ -29,8 +30,13 @@ class Loader:
             create_table_arg += ", %s real" % column
         create_table_arg += ")"
 
-        # parametre brat z .env
-        conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="mojpostgres2025", port=5432)
+        load_dotenv()
+        self._my_host = os.getenv("HOST")
+        self._my_dbname = os.getenv("DB_NAME")
+        self._my_user = os.getenv("USER")
+        self._my_password = os.getenv("PASSWORD")
+        print(self._my_host, self._my_dbname, self._my_user, self._my_password)
+        conn = psycopg2.connect(host=self._my_host, dbname=self._my_dbname, user=self._my_user, password=self._my_password)
         cur = conn.cursor()
 
         cur.execute(create_table_arg)
@@ -46,8 +52,7 @@ class Loader:
 
     def load(self, transformed_chunk):
 
-        # parametre brat z .env
-        conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres", password="mojpostgres2025", port=5432)
+        conn = psycopg2.connect(host=self._my_host, dbname=self._my_dbname, user=self._my_user, password=self._my_password)
 
         cur = conn.cursor()
 
