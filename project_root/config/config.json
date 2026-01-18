@@ -6,9 +6,9 @@
     {
       "id": 0, 
       "type":"Water", 
-      "path": "data/raw/Beach_Water_Quality_-_Automated_Sensors_20251016.csv",
+      "path": "data/raw/Beach_Water_Quality_300_rows.csv",
       "target_facts": {
-        "target_table": "Measurements", 
+        "target_table": "measurements", 
         "source_columns": [
           {  
             "name":"Water Temperature",

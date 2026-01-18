@@ -1,4 +1,5 @@
 from src.extract.CSVExtractor import CSVExtractor
+from src.load.Loader import Loader
 from src.transform.select_source_columns import select_source_columns
 from src.transform.format_timestamps import format_timestamps
 from src.transform.remove_duplicates import remove_duplicates
@@ -19,6 +20,7 @@ class Transformer:
            active_measurement_path = self._config.get("measurements")[self._active_measurement].get("path")
            self._extractor = CSVExtractor(active_measurement_path)
            self._f = open("data/output/output.txt", "w", encoding="utf-8")
+           self._loader = Loader(self._config)
 
       
       def _load_config(self, config_file):
@@ -75,7 +77,7 @@ class Transformer:
             #chunk = remove_rows_with_all_nans(chunk, source_columns_names)
             # edit argument
             chunk = approximate_missing_values_rows(chunk, join_column_measurements, time_source_column, source_columns_names, max_approximated, "1h")
-            
+
             pandas.set_option("display.max_rows", None)
             pandas.set_option("display.max_columns", None)
             pandas.set_option("display.width", None)
@@ -83,7 +85,7 @@ class Transformer:
             self._f.write("Transformed chunk:\n")
             self._f.write(data_frame.to_string())
             self._f.write("\n\n")
-
+            self._loader.load(chunk)
 
       def apply_trans_all(self):
             chunk_accumulators = self._create_chunk_accumulators()
