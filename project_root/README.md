@@ -17,15 +17,15 @@ PASSWORD = ""
 - "max_approximated" - maximálny počet aproximovateľných hodnôt za sebou
 - "active_measurement" - id slovníka z measurements
 - "measurements" - zoznam slovníkov, každý popisuje jeden .csv súbor určený na transformáciu
-    "id" - id merania
-    "type" - typ merania, v našom prípade Water alebo Weather 
-    "path" - cesta od project_root ku csv. súboru
-    "target_facts"
+    - "id" - id merania
+    - "type" - typ merania, v našom prípade Water alebo Weather 
+    - "path" - cesta od project_root ku csv. súboru
+    - "target_facts"
         - "target_table" - názov výstupnej tabuľky v databáze
         - "source_columns"
             - zoznam slovníkov, každý slovník zodpovedá jednému MERANÉMU atribútu zo   vstupnej tabuľky, teda stĺpce s menom senzora a timestampom tu nejdú, stĺpce meraní, ktoré nebudú tu, transfomátor odignoruje
             - v každom slovníku je meno senzora, minimálna a maximálna možná hodnota, podľa toho sa budú identifikovať nekorektné hodnoty
-    "target_dimensions"
+    - "target_dimensions"
         - slovník s "accumulator": "yes"
             - "join_column_measurements" - názov stĺpce, podľa ktorého sa záznamy rozdeľujú do akumulátorov, v našom prípade ide o stĺpec s názvom senzora
             - "join_column_codelist" - názov stĺpca z codelistu, v ktorom sa nachádza informácia o type senzora
