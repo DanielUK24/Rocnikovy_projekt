@@ -13,10 +13,10 @@ USER = ""
 PASSWORD = ""
 
 ## .config
-"chunk_size" - veľkosť jedného chunku
-"max_approximated" - maximálny počet aproximovateľných hodnôt za sebou
-"active_measurement" - id slovníka z measurements
-"measurements" - zoznam slovníkov, každý popisuje jeden .csv súbor určený na transformáciu
+- "chunk_size" - veľkosť jedného chunku
+- "max_approximated" - maximálny počet aproximovateľných hodnôt za sebou
+- "active_measurement" - id slovníka z measurements
+- "measurements" - zoznam slovníkov, každý popisuje jeden .csv súbor určený na transformáciu
     "id" - id merania
     "type" - typ merania, v našom prípade Water alebo Weather 
     "path" - cesta od project_root ku csv. súboru
@@ -32,7 +32,7 @@ PASSWORD = ""
             - "sensor_name_column_codelist" - názov stĺpca z codelistu s menami senzorov
         - slovník s "time_dimension": "yes"
             - "source_column" - meno stĺpca s timestampom vo vstupnej tabuľke
-"codelists"
+- "codelists"
     - zoznam slovníkov, každý zodpovedá jednému codelistu, obsahuje id a cestu ku codelistu, v codeliste musia byť práve tie senzory, pre ktoré chceme robiť tranformácie, zvyšné senzory bude transformátor ignorovať
 
 ## Comments
