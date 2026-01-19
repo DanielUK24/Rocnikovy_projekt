@@ -7,9 +7,12 @@
 
 Create a `.env` file in the project root based on `.env.example`:
 
-HOST = "" 
+HOST = ""
+
 DB_NAME = ""
+
 USER = ""
+
 PASSWORD = ""
 
 ## .config
@@ -42,7 +45,7 @@ PASSWORD = ""
         - dáta prišli v iných časoch, ako je pravidlom, ale pritom prišli aj v riadnom čase
         - duplicitné záznamy - rovnaké hodnoty
         - duplicitné záznamy - rôzne hodnoty
-    - 2. correct_measurements - Doplní chýbajúce riadky do limitu max_aproximated z .config. Potom aproximuje tie chýbajúce hodnoty a nekorektné hodnoty, ktoré podľa max_aproximated môže aproximovať. Chýbajúce hodnoty sú označené hodnotou None. Skok v čase je označený riadkom s menom senzora, timestampom a hodnotami nan z knižnice numpy. Aktuálna verzia však ešte nevie pracovať so skokmi v čase a ešte nie je implementovaný dvojbufferový akumulátor. Tieto funkcie sa pokúsim do piatku doplniť. Táto transformácie teda rieši nasledovné chyby:
+    - 2. correct_measurements - Doplní chýbajúce riadky do limitu max_aproximated z .config. Potom aproximuje tie chýbajúce hodnoty a nekorektné hodnoty, ktoré podľa max_aproximated môže aproximovať. Chýbajúce hodnoty sú označené hodnotou None. Skok v čase je označený riadkom s menom senzora, timestampom a hodnotami nan z knižnice numpy. Aktuálna verzia rieši zatiaľ skôr klasické prípady a tie okrajovejšie ešte nie sú ošetrené. Do piatku by som chcel ošetriť aj tieto okrajové prípady a implementovať dvojbufferový akumulátor. Táto transformácie teda rieši nasledovné chyby:
         - nekorektné hodnoty (mimo bežného rozsahu)
         - chýbajúce hodnoty pre niektoré atribúty
         - chýbajúce celé záznamy pre niektoré timestampy
