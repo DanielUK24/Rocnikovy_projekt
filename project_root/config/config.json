@@ -4,13 +4,13 @@
   "active_measurement": 0,
   "measurements": [
     {
-      "id": 0, 
+      "id": 0,
       "type":"Water", 
-      "path": "data/raw/Beach_Water_Quality_300_rows.csv",
+      "path": "data/raw/water_cca_300_lines.csv",
       "target_facts": {
-        "target_table": "measurements", 
+        "target_table": "measurements water", 
         "source_columns": [
-          {  
+          {
             "name":"Water Temperature",
             "min_value": -5,
             "max_value": 40
@@ -49,7 +49,7 @@
           "source_codelist_id": 0,
           "join_column_measurements": "Beach Name",
           "join_column_codelist": "Sensor Type",
-          "codelist_accumulator_keys_column": "Sensor Name",
+          "sensor_name_column_codelist": "Sensor Name",
           "accumulator": "yes"
         },
         {
@@ -58,31 +58,140 @@
           "time_dimension": "yes"
         }
       ]
-      
     },
     {
-      "id": 1, 
-      "type": "Weather", 
-      "path": "",
+      "id": 1,
+      "type":"Water", 
+      "path": "data/raw/Beach_Water_Quality_-_Automated_Sensors_20251016.csv",
       "target_facts": {
-        "target_table": "Measurements",
+        "target_table": "measurements water", 
         "source_columns": [
-          "Station Name",
-          "Measurement Timestamp",
-          "Air Temperature",
-          "Wet Bulb Temperature",
-          "Humidity",
-          "Rain Intensity",
-          "Interval Rain",
-          "Total Rain",
-          "Precipitation Type",
-          "Wind Direction",
-          "Wind Speed",
-          "Maximum Wind Speed",
-          "Barometric Pressure",
-          "Solar Radiation",
-          "Heading",
-          "Battery Life"
+          {
+            "name":"Water Temperature",
+            "min_value": -5,
+            "max_value": 40
+          },
+          {  
+            "name": "Turbidity",
+            "min_value": 0,
+            "max_value": 1000
+          },
+          {  
+            "name": "Transducer Depth",
+            "min_value": 0,
+            "max_value": 50
+          },
+          {  
+            "name": "Wave Height",
+            "min_value": 0,
+            "max_value": 20
+          },
+          {  
+            "name": "Wave Period",
+            "min_value": 0,
+            "max_value": 30
+          },
+          {  
+            "name": "Battery Life",
+            "min_value": 0,
+            "max_value": 15
+          }
+        ]
+      },
+      "target_dimensions" : [
+        {
+          "target_table": "Sensor",
+          "source_column": "Beach Name",
+          "source_codelist_id": 0,
+          "join_column_measurements": "Beach Name",
+          "join_column_codelist": "Sensor Type",
+          "sensor_name_column_codelist": "Sensor Name",
+          "accumulator": "yes"
+        },
+        {
+          "target_table": "Timestamp",
+          "source_column": "Measurement Timestamp",
+          "time_dimension": "yes"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type":"Weather", 
+      "path": "data/raw/Beach_Weather_Stations_-_Automated_Sensors_20251016.csv",
+      "target_facts": {
+        "target_table": "measurements weather",
+        "source_columns": [
+          {  
+            "name":"Air Temperature",
+            "min_value": -33,
+            "max_value": 40
+          },
+          {  
+            "name": "Wet Bulb Temperature",
+            "min_value": -25,
+            "max_value": 30
+          },
+          {  
+            "name": "Humidity",
+            "min_value": 10,
+            "max_value": 100
+          },
+          {  
+            "name": "Rain Intensity",
+            "min_value": 0,
+            "max_value": 100
+          },
+          {  
+            "name": "Interval Rain",
+            "min_value": 0,
+            "max_value": 100
+          },
+          {  
+            "name": "Total Rain",
+            "min_value": 0,
+            "max_value": 100
+          },
+          {  
+            "name": "Precipitation Type",
+            "min_value": 0,
+            "max_value": 15
+          },
+          {  
+            "name": "Wind Direction",
+            "min_value": 0,
+            "max_value": 360
+          },
+          {  
+            "name": "Wind Speed",
+            "min_value": 0,
+            "max_value": 35
+          },
+          {  
+            "name": "Maximum Wind Speed",
+            "min_value": 0,
+            "max_value": 35
+          },
+          {  
+            "name": "Barometric Pressure",
+            "min_value": 960,
+            "max_value": 1045
+          },
+          {  
+            "name": "Solar Radiation",
+            "min_value": 0,
+            "max_value": 1050
+          },
+          {  
+            "name": "Heading",
+            "min_value": 0,
+            "max_value": 360
+          },
+          {  
+            "name": "Battery Life",
+            "min_value": 0,
+            "max_value": 15
+          }
         ]
       },
       "target_dimensions" : [
@@ -92,7 +201,7 @@
           "source_codelist_id": 0,
           "join_column_measurements": "Station Name",
           "join_column_codelist": "Sensor Type",
-          "codelist_accumulator_keys_column": "Sensor Name",
+          "sensor_name_column_codelist": "Sensor Name",
           "accumulator": "yes"
         },
         {

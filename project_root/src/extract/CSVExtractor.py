@@ -1,6 +1,4 @@
 import csv
-import json
-from pathlib import Path
 
 class CSVExtractor:
     def __init__(self, csv_file_path):

@@ -1,0 +1,49 @@
+## Requirements
+
+- Python 3.10+
+- PostgreSQL 13+
+
+## Credentials to database
+
+Create a `.env` file in the project root based on `.env.example`:
+
+HOST = "" 
+DB_NAME = ""
+USER = ""
+PASSWORD = ""
+
+## .config
+"chunk_size" - veľkosť jedného chunku
+"max_approximated" - maximálny počet aproximovateľných hodnôt za sebou
+"active_measurement" - id slovníka z measurements
+"measurements" - zoznam slovníkov, každý popisuje jeden .csv súbor určený na transformáciu
+    "id" - id merania
+    "type" - typ merania, v našom prípade Water alebo Weather 
+    "path" - cesta od project_root ku csv. súboru
+    "target_facts"
+        - "target_table" - názov výstupnej tabuľky v databáze
+        - "source_columns"
+            - zoznam slovníkov, každý slovník zodpovedá jednému MERANÉMU atribútu zo   vstupnej tabuľky, teda stĺpce s menom senzora a timestampom tu nejdú, stĺpce meraní, ktoré nebudú tu, transfomátor odignoruje
+            - v každom slovníku je meno senzora, minimálna a maximálna možná hodnota, podľa toho sa budú identifikovať nekorektné hodnoty
+    "target_dimensions"
+        - slovník s "accumulator": "yes"
+            - "join_column_measurements" - názov stĺpce, podľa ktorého sa záznamy rozdeľujú do akumulátorov, v našom prípade ide o stĺpec s názvom senzora
+            - "join_column_codelist" - názov stĺpca z codelistu, v ktorom sa nachádza informácia o type senzora
+            - "sensor_name_column_codelist" - názov stĺpca z codelistu s menami senzorov
+        - slovník s "time_dimension": "yes"
+            - "source_column" - meno stĺpca s timestampom vo vstupnej tabuľke
+"codelists"
+    - zoznam slovníkov, každý zodpovedá jednému codelistu, obsahuje id a cestu ku codelistu, v codeliste musia byť práve tie senzory, pre ktoré chceme robiť tranformácie, zvyšné senzory bude transformátor ignorovať
+
+## Comments
+- Transformácie nakoniec sú dve:
+    - 1. regularize_timestamps - Najprv zaokrúhli timestampy na celé hodiny. Následne odstráni takto vzniknuté duplicity spolu s duplicitami, ktoré tam už boli. Táto transformácie teda rieši nasledovné chyby:
+        - dáta prišli v iných časoch, ako je pravidlom, v riadnom pritom neprišli
+        - dáta prišli v iných časoch, ako je pravidlom, ale pritom prišli aj v riadnom čase
+        - duplicitné záznamy - rovnaké hodnoty
+        - duplicitné záznamy - rôzne hodnoty
+    - 2. correct_measurements - Doplní chýbajúce riadky do limitu max_aproximated z .config. Potom aproximuje tie chýbajúce hodnoty a nekorektné hodnoty, ktoré podľa max_aproximated môže aproximovať. Chýbajúce hodnoty sú označené hodnotou None. Skok v čase je označený riadkom s menom senzora, timestampom a hodnotami nan z knižnice numpy. Aktuálna verzia však ešte nevie pracovať so skokmi v čase a ešte nie je implementovaný dvojbufferový akumulátor. Tieto funkcie sa pokúsim do piatku doplniť. Táto transformácie teda rieši nasledovné chyby:
+        - nekorektné hodnoty (mimo bežného rozsahu)
+        - chýbajúce hodnoty pre niektoré atribúty
+        - chýbajúce celé záznamy pre niektoré timestampy
+- Načítanie do databázy je hotové

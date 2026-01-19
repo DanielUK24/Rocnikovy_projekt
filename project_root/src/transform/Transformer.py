@@ -1,34 +1,29 @@
 from src.extract.CSVExtractor import CSVExtractor
-from src.load.Loader import Loader
+from src.load.loader import Loader
 from src.transform.select_source_columns import select_source_columns
 from src.transform.format_timestamps import format_timestamps
-from src.transform.remove_duplicates import remove_duplicates
-from src.transform.convert_measurement_values_to_float_or_nan import convert_measurement_values_to_float_or_nan
-from src.transform.remove_out_of_range_values import remove_out_of_range_values
-from src.transform.approximate_missing_values_rows import approximate_missing_values_rows
-from src.transform.remove_rows_with_all_nans import remove_rows_with_all_nans
+from src.transform.correct_measurements import correct_measurements
+from src.transform.regularize_timestamps import regularize_timestamps
 from dateutil import parser
 import json
-import pandas
 
 class Transformer:
 
-      def __init__(self, config_file):
+      def __init__(self):
 
-           self._config = self._load_config(config_file)
+           self._config = self._load_config("config/config.json")
            self._active_measurement = self._config.get("active_measurement")
            active_measurement_path = self._config.get("measurements")[self._active_measurement].get("path")
            self._extractor = CSVExtractor(active_measurement_path)
-           self._f = open("data/output/output.txt", "w", encoding="utf-8")
-           self._loader = Loader(self._config)
-
+           self._regularize_bool = False
+           self._correct_bool = False
       
       def _load_config(self, config_file):
             with open(config_file, 'r', encoding='utf-8') as f:
                   return json.load(f)
 
       def _create_chunk_accumulators(self):
-            active_measurement_type = self._config["measurements"][self._active_measurement]["type"]
+            type = self._config["measurements"][self._active_measurement]["type"]
             source_codelist_id = self._config["measurements"][self._active_measurement]["target_dimensions"][0]["source_codelist_id"]
             codelist_path = self._config["codelists"][source_codelist_id]["path"]
             codelist_extractor = CSVExtractor(codelist_path)
@@ -36,14 +31,14 @@ class Transformer:
             chunk_accumulators = {}
 
             join_column_codelist = self._config["measurements"][0]["target_dimensions"][0]["join_column_codelist"]
-            codelist_accumulator_keys_column = self._config["measurements"][0]["target_dimensions"][0]["codelist_accumulator_keys_column"]
+            sensor_name_column_codelist = self._config["measurements"][0]["target_dimensions"][0]["sensor_name_column_codelist"]
 
             while True:
                   row = codelist_extractor.get_next_row()
                   if not row:
                         break
-                  if row[join_column_codelist] == active_measurement_type:
-                        chunk_accumulators[row[codelist_accumulator_keys_column]] = []
+                  if row[join_column_codelist] == type:
+                        chunk_accumulators[row[sensor_name_column_codelist]] = []
 
             codelist_extractor.close()
             return chunk_accumulators
@@ -61,38 +56,31 @@ class Transformer:
                   dif = self._time_difference(prev, act)
                   dif_count[dif] = dif_count.get(dif, 0) + 1
                   prev = act
-            print(dif_count)
             return max(dif_count, key=dif_count.get)
       
-      def _apply_trans_all_to_chunk(self, chunk, join_column_measurements, time_source_column, max_approximated):
+      def _apply_trans_all_to_chunk(self, chunk, join_column_measurements):
             source_columns = self._config["measurements"][self._active_measurement]["target_facts"]["source_columns"]
             source_columns_names = [sc["name"] for sc in source_columns]
-            chunk = select_source_columns(chunk, source_columns_names, join_column_measurements, time_source_column)
+            timestamp_source_column = self._config["measurements"][self._active_measurement]["target_dimensions"][1]["source_column"]
+            max_approximated = self._config["max_approximated"]
 
-            chunk = format_timestamps(chunk, time_source_column)
-            chunk = sorted(chunk, key=lambda d: d[time_source_column], reverse=False)
-            convert_measurement_values_to_float_or_nan(chunk, join_column_measurements, time_source_column)
-            remove_out_of_range_values(chunk, source_columns)
-            chunk = remove_duplicates(chunk, join_column_measurements, time_source_column)
-            #chunk = remove_rows_with_all_nans(chunk, source_columns_names)
-            # edit argument
-            chunk = approximate_missing_values_rows(chunk, join_column_measurements, time_source_column, source_columns_names, max_approximated, "1h")
-
-            pandas.set_option("display.max_rows", None)
-            pandas.set_option("display.max_columns", None)
-            pandas.set_option("display.width", None)
-            data_frame = pandas.DataFrame(chunk)
-            self._f.write("Transformed chunk:\n")
-            self._f.write(data_frame.to_string())
-            self._f.write("\n\n")
+            chunk = select_source_columns(chunk, source_columns_names, join_column_measurements, timestamp_source_column)
+            chunk = format_timestamps(chunk, timestamp_source_column)
+            chunk = sorted(chunk, key=lambda d: d[timestamp_source_column], reverse=False)
+            
+            if self._regularize_bool:
+                  chunk = regularize_timestamps(chunk, join_column_measurements, timestamp_source_column, source_columns_names)
+            
+            if self._correct_bool:
+                  chunk = correct_measurements(chunk, source_columns, source_columns_names, timestamp_source_column, join_column_measurements, max_approximated)
+            
             self._loader.load(chunk)
 
-      def apply_trans_all(self):
+      def _apply_chosen_trans(self):
             chunk_accumulators = self._create_chunk_accumulators()
             join_column_measurements = self._config["measurements"][self._active_measurement]["target_dimensions"][0]["join_column_measurements"]
-            time_source_column = self._config["measurements"][self._active_measurement]["target_dimensions"][1]["source_column"]
             chunk_size = self._config["chunk_size"]
-            max_approximated = self._config["max_approximated"]
+            self._loader = Loader(self._config)
 
             while True:
                   row = self._extractor.get_next_row()
@@ -102,17 +90,32 @@ class Transformer:
                         continue
                   chunk_accumulators[row[join_column_measurements]].append(row)
 
-                  # when an accumulator reaches chunk_size, we start transformations
+                  # when the accumulator reaches chunk_size, start transformations
                   if len(chunk_accumulators[row[join_column_measurements]]) >= chunk_size:
                         accumulator = chunk_accumulators[row[join_column_measurements]]
-                        self._apply_trans_all_to_chunk(accumulator, join_column_measurements, time_source_column, max_approximated)
+                        self._apply_trans_all_to_chunk(accumulator, join_column_measurements)
+                        
                         # empty accumulator
                         del chunk_accumulators[row[join_column_measurements]][:]
                   
             for accumulator in chunk_accumulators.values():
                   if len(accumulator) > 0:
                         # start transformations
-                        self._apply_trans_all_to_chunk(accumulator, join_column_measurements, time_source_column, max_approximated)
+                        self._apply_trans_all_to_chunk(accumulator, join_column_measurements)
             
             self._extractor.close()
-            self._f.close()
+      
+      def apply_trans_all(self):
+            self._regularize_bool = True
+            self._correct_bool = True
+            self._apply_chosen_trans()
+
+      def apply_trans_regularize(self):
+            self._regularize_bool = True
+            self._correct_bool = False
+            self._apply_chosen_trans()
+
+      def apply_trans_correct(self):
+            self._regularize_bool = False
+            self._correct_bool = True
+            self._apply_chosen_trans()
