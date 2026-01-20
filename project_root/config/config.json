@@ -1,7 +1,7 @@
 {
   "chunk_size": 30,
   "max_approximated": 5,
-  "active_measurement": 0,
+  "active_measurement": 1,
   "measurements": [
     {
       "id": 0,

@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 class Loader:
 
     def __init__(self, config):
-        # check which variables do not have to be instance variables
 
         active_measurement = config["active_measurement"]
         source_columns = config["measurements"][active_measurement]["target_facts"]["source_columns"]
@@ -24,17 +23,17 @@ class Loader:
         self._measurement_columns_without_spaces = []
         for column in self._source_columns_names:
             self._measurement_columns_without_spaces.append(column.replace(" ", "_"))
-
+        
         create_table_arg = "CREATE TABLE %s (%s varchar, %s timestamp" % (self._target_table_without_spaces, self._sensor_source_column_without_spaces, self.source_column_timestamp_without_spaces)
         for column in self._measurement_columns_without_spaces:
             create_table_arg += ", %s real" % column
         create_table_arg += ")"
 
         load_dotenv()
-        self._my_host = os.getenv("HOST")
+        self._my_host = os.getenv("DB_HOST")
         self._my_dbname = os.getenv("DB_NAME")
-        self._my_user = os.getenv("USER")
-        self._my_password = os.getenv("PASSWORD")
+        self._my_user = os.getenv("DB_USER")
+        self._my_password = os.getenv("DB_PASSWORD")
         conn = psycopg2.connect(host=self._my_host, dbname=self._my_dbname, user=self._my_user, password=self._my_password)
         cur = conn.cursor()
 

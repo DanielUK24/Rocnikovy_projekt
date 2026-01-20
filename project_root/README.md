@@ -3,19 +3,25 @@
 - Python 3.10+
 - PostgreSQL 13+
 
+## Running the aplication
+- po správnom nastavení .env a .config (vid nizsie) spustite main.py
+- v main.py sa najprv vytvorí inštancia transformer triedy Transformer následne sa príkazom:
+    - transformer.apply_trans_all() - spustia všetky transformácie
+    - transformer.apply_trans_regularize() - spustí iba trasformácia regularize_timestamps
+    - transformer.apply_trans_correct() - spustí iba trasformácia correct_measurements
+- všetky parametre sa čítajú zo súboru .config
+- po spustení sa vykonajú transformácie a dáta sa načítajú do databázy
+
 ## Credentials to database
 
-Create a `.env` file in the project root based on `.env.example`:
+Vytvorte `.env` súbor v project_root na základe `.env.example`:
 
-HOST = ""
-
+DB_HOST = ""
 DB_NAME = ""
+DB_USER = ""
+DB_PASSWORD = ""
 
-USER = ""
-
-PASSWORD = ""
-
-## .config
+## config.json
 - "chunk_size" - veľkosť jedného chunku
 - "max_approximated" - maximálny počet aproximovateľných hodnôt za sebou
 - "active_measurement" - id slovníka z measurements

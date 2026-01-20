@@ -1,4 +1,4 @@
-from src.extract.CSVExtractor import CSVExtractor
+from src.extract.csv_extractor import CSVExtractor
 from src.load.loader import Loader
 from src.transform.select_source_columns import select_source_columns
 from src.transform.format_timestamps import format_timestamps
