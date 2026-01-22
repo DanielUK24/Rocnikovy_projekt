@@ -1,4 +1,5 @@
 from datetime import timedelta
+from src.transform.convert_string_measurements import convert_string_measurements
 
 def create_new_row(duplicates, sensor_source_column, timestamp_source_column, source_columns_names):
     new_row = {}
@@ -15,14 +16,7 @@ def create_new_row(duplicates, sensor_source_column, timestamp_source_column, so
     
     for row in duplicates:
         for column_name in source_columns_names:
-            if row[column_name] != "":
-
-                if type(row[column_name]) is not float:
-                    try:
-                        row[column_name] = float(row[column_name].replace(",",""))
-                    except:
-                        print("cannot be converted to float:", row[column_name], type(row[column_name]))
-                        break
+            if row[column_name] != None:
                 
                 average_numerators[column_name] += row[column_name]
                 average_denominators[column_name] += 1
@@ -38,7 +32,9 @@ def create_new_row(duplicates, sensor_source_column, timestamp_source_column, so
 def round_hours(dt):
     return dt.replace(minute=0, second=0, microsecond=0) + timedelta(hours = 1 if dt.minute >= 30 else 0)
 
-def regularize_timestamps(chunk, sensor_source_column, timestamp_source_column, source_columns_names):
+def regularize_timestamps(chunk, sensor_source_column, timestamp_source_column, source_columns, source_columns_names):
+
+    chunk = convert_string_measurements(chunk, source_columns)
 
     for row in chunk:
         row[timestamp_source_column] = round_hours(row[timestamp_source_column])
@@ -65,5 +61,5 @@ def regularize_timestamps(chunk, sensor_source_column, timestamp_source_column, 
         new_chunk.append(new_row)
 
         i = j
-   
+
     return new_chunk

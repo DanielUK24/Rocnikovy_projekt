@@ -8,7 +8,7 @@
 - v main.py sa najprv vytvorí inštancia transformer triedy Transformer následne sa príkazom:
     - transformer.apply_trans_all() - spustia všetky transformácie
     - transformer.apply_trans_regularize() - spustí iba trasformácia regularize_timestamps
-    - transformer.apply_trans_correct() - spustí iba trasformácia correct_measurements
+    - transformer.apply_trans_correct() - spustí iba trasformácia correct_measurements, podmienkou pre toto spustenie však je, že všetky timestampy musia prichádzať na celú hodinu, lebo implementácia correct_measurements si to vyžaduje, ale rieši to transformácia regularize_timestamps
 - všetky parametre sa čítajú zo súboru .config
 - po spustení sa vykonajú transformácie a dáta sa načítajú do databázy
 

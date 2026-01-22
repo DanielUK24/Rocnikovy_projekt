@@ -69,7 +69,7 @@ class Transformer:
             #chunk = sorted(chunk, key=lambda d: d[timestamp_source_column], reverse=False)
             
             if self._regularize_bool:
-                  chunk = regularize_timestamps(chunk, join_column_measurements, timestamp_source_column, source_columns_names)
+                  chunk = regularize_timestamps(chunk, join_column_measurements, timestamp_source_column, source_columns, source_columns_names)
             
             if self._correct_bool:
                   chunk = correct_measurements(chunk, source_columns, source_columns_names, timestamp_source_column, join_column_measurements, max_approximated)

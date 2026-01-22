@@ -1,5 +1,6 @@
 import numpy as np
 from datetime import timedelta
+from src.transform.convert_string_measurements import convert_string_measurements
 
 TIME_BREAK = object()
 
@@ -44,22 +45,7 @@ def correct_measurements(chunk, source_columns, source_columns_names, timestamp_
 
     common_difference = timedelta(hours = 1)
 
-    # replace empty values and incorrect values by None
-    for row in chunk:
-        for column in source_columns:
-            
-            if row[column["name"]] == "":
-                row[column["name"]] = None
-                continue
-
-            if type(row[column["name"]]) is not float:
-                try:
-                    row[column["name"]] = float(row[column["name"]].replace(",",""))
-                except:
-                    print("cannot be converted to float:", row[column["name"]])
-            
-            if not column["min_value"] <= row[column["name"]] <= column["max_value"]:
-                row[column["name"]] = None
+    chunk = convert_string_measurements(chunk, source_columns)
     
     # add missing rows
     middle_row = {}
