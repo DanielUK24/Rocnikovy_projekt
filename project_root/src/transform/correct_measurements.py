@@ -1,6 +1,8 @@
 import numpy as np
 from datetime import timedelta
 
+TIME_BREAK = object()
+
 # returns the value of nearest float from index i in chunk according to direction
 # and number of missing rows between them
 def find_nearest_float(chunk, i, column, direction):
@@ -11,10 +13,10 @@ def find_nearest_float(chunk, i, column, direction):
     j = i + d
     missing = 0
     while 0 <= j < len(chunk):
-        assert type(chunk[j][column]) == float or chunk[j][column] == None or chunk[j][column] == np.nan
+        assert type(chunk[j][column]) == float or chunk[j][column] == None or chunk[j][column] == TIME_BREAK
         if type(chunk[j][column]) == float:
             return (chunk[j][column],missing)
-        if chunk[j][column] == np.nan:
+        if chunk[j][column] == TIME_BREAK:
             return (None, missing)
         missing += 1
         j = j + d
@@ -30,7 +32,7 @@ def fill_range_by_value(chunk, column, start, end, value):
 def calculate_approximated_value(value1, value2):
     assert type(value1) == float or type(value2) == float
     assert value1 != None or value2 != None
-    assert value1 != np.nan and value2 != np.nan
+    assert value1 != TIME_BREAK and value2 != TIME_BREAK
     if value1 != None and value2 != None:
         return (value1+value2)/2
     elif value1 != None:
@@ -70,7 +72,7 @@ def correct_measurements(chunk, source_columns, source_columns_names, timestamp_
 
     for column_name in source_columns_names:
         middle_row[column_name] = None
-        dividing_row[column_name] = np.nan
+        dividing_row[column_name] = TIME_BREAK
     
     chunk_rows_added = [chunk[0]]
     prev = chunk[0]
@@ -80,7 +82,6 @@ def correct_measurements(chunk, source_columns, source_columns_names, timestamp_
         assert dif % common_difference == timedelta(0)
 
         if dif/common_difference > max_approximated+1:
-            print("here", act[timestamp_source_column])
             new_dividing_row = dividing_row.copy()
             new_dividing_row[timestamp_source_column] = prev[timestamp_source_column] + common_difference
             chunk_rows_added.append(new_dividing_row)
@@ -102,7 +103,7 @@ def correct_measurements(chunk, source_columns, source_columns_names, timestamp_
         previous = None
         while i < len(chunk_rows_added):
 
-            if i == -1 or chunk_rows_added[i][column_name] == np.nan:
+            if i == -1 or chunk_rows_added[i][column_name] == TIME_BREAK:
                 nfloat_missing = find_nearest_float(chunk_rows_added, i, column_name, "forward")
                 nfloat = nfloat_missing[0]
                 missing = nfloat_missing[1]
@@ -151,5 +152,10 @@ def correct_measurements(chunk, source_columns, source_columns_names, timestamp_
                     i = i+missing
             
             i += 1
+
+    for row in chunk_rows_added:
+        for column_name in source_columns_names:
+            if row[column_name] == TIME_BREAK:
+                row[column_name] = np.nan
     
     return chunk_rows_added

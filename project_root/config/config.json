@@ -129,18 +129,18 @@
           },
           {  
             "name": "Wet Bulb Temperature",
-            "min_value": -25,
-            "max_value": 30
+            "min_value": -33,
+            "max_value": 40
           },
           {  
             "name": "Humidity",
-            "min_value": 10,
+            "min_value": 0,
             "max_value": 100
           },
           {  
             "name": "Rain Intensity",
             "min_value": 0,
-            "max_value": 100
+            "max_value": 190
           },
           {  
             "name": "Interval Rain",
@@ -150,12 +150,12 @@
           {  
             "name": "Total Rain",
             "min_value": 0,
-            "max_value": 100
+            "max_value": 1000
           },
           {  
             "name": "Precipitation Type",
             "min_value": 0,
-            "max_value": 15
+            "max_value": 75
           },
           {  
             "name": "Wind Direction",
@@ -180,7 +180,7 @@
           {  
             "name": "Solar Radiation",
             "min_value": 0,
-            "max_value": 1050
+            "max_value": 1300
           },
           {  
             "name": "Heading",
@@ -190,7 +190,7 @@
           {  
             "name": "Battery Life",
             "min_value": 0,
-            "max_value": 15
+            "max_value": 16
           }
         ]
       },
