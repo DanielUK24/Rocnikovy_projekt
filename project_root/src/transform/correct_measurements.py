@@ -1,6 +1,43 @@
 import numpy as np
 from datetime import timedelta
 
+# returns the value of nearest float from index i in chunk according to direction
+# and number of missing rows between them
+def find_nearest_float(chunk, i, column, direction):
+    assert direction == "forward" or direction == "backward"
+    if direction == "forward": d = 1
+    else: d = -1
+
+    j = i + d
+    missing = 0
+    while 0 <= j < len(chunk):
+        assert type(chunk[j][column]) == float or chunk[j][column] == None or chunk[j][column] == np.nan
+        if type(chunk[j][column]) == float:
+            return (chunk[j][column],missing)
+        if chunk[j][column] == np.nan:
+            return (None, missing)
+        missing += 1
+        j = j + d
+    
+    return (None, missing)
+
+def fill_range_by_value(chunk, column, start, end, value):
+    j = start
+    while start <= j <= end:
+        chunk[j][column] = value
+        j += 1
+
+def calculate_approximated_value(value1, value2):
+    assert type(value1) == float or type(value2) == float
+    assert value1 != None or value2 != None
+    assert value1 != np.nan and value2 != np.nan
+    if value1 != None and value2 != None:
+        return (value1+value2)/2
+    elif value1 != None:
+        return value1
+    else:
+        return value2
+
 def correct_measurements(chunk, source_columns, source_columns_names, timestamp_source_column, sensor_source_column, max_approximated):
 
     common_difference = timedelta(hours = 1)
@@ -19,86 +56,100 @@ def correct_measurements(chunk, source_columns, source_columns_names, timestamp_
                 except:
                     print("cannot be converted to float:", row[column["name"]])
             
-            if not column["min_value"] < row[column["name"]] < column["max_value"]:
+            if not column["min_value"] <= row[column["name"]] <= column["max_value"]:
                 row[column["name"]] = None
+    
+    # add missing rows
+    middle_row = {}
+    middle_row[sensor_source_column] = chunk[0][sensor_source_column]
+    middle_row[timestamp_source_column] = None
 
-    n = len(chunk)
-    last_values = {}
-    for row_number in range(n):
-        for column_name in source_columns_names:
-            if chunk[row_number][column_name] == None:
-                pass
-            else:
-                last_values[column_name] = chunk[row_number][column_name]
-
-    # add missing lines
-    middle_line = {}
-    middle_line[sensor_source_column] = chunk[0][sensor_source_column]
-    middle_line[timestamp_source_column] = None
-
-    dividing_line = {}
-    dividing_line[sensor_source_column] = chunk[0][sensor_source_column]
-    dividing_line[timestamp_source_column] = None
+    dividing_row = {}
+    dividing_row[sensor_source_column] = chunk[0][sensor_source_column]
+    dividing_row[timestamp_source_column] = None
 
     for column_name in source_columns_names:
-        middle_line[column_name] = None
-        dividing_line[column_name] = np.nan
-
-    processed_chunk = [chunk[0]]
+        middle_row[column_name] = None
+        dividing_row[column_name] = np.nan
+    
+    chunk_rows_added = [chunk[0]]
     prev = chunk[0]
     for row in chunk[1::]:
         act = row
-        dif = act[timestamp_source_column] - prev[timestamp_source_column]
+        dif = abs(act[timestamp_source_column] - prev[timestamp_source_column])
         assert dif % common_difference == timedelta(0)
 
         if dif/common_difference > max_approximated+1:
-            new_dividing_line = dividing_line.copy()
-            new_dividing_line[timestamp_source_column] = prev[timestamp_source_column] + common_difference
-            processed_chunk.append(new_dividing_line)
+            print("here", act[timestamp_source_column])
+            new_dividing_row = dividing_row.copy()
+            new_dividing_row[timestamp_source_column] = prev[timestamp_source_column] + common_difference
+            chunk_rows_added.append(new_dividing_row)
             
         else:
             missing_rows_number = int(dif/common_difference-1)
             for i in range(1, missing_rows_number+1):
-                new_middle_line = middle_line.copy()
-                new_middle_line[timestamp_source_column] = prev[timestamp_source_column] + common_difference * i
-                processed_chunk.append(new_middle_line)
+                new_middle_row = middle_row.copy()
+                new_middle_row[timestamp_source_column] = prev[timestamp_source_column] + common_difference * i
+                chunk_rows_added.append(new_middle_row)
         
-        processed_chunk.append(act)
+        chunk_rows_added.append(act)
         prev = act
-    
-    # approximate missing values that can be approximated
-    # zatial predpokladame, ze prvy riadok je plny
-    for column_name in source_columns_names:
-        prev_value = processed_chunk[0][column_name]
-        i = 1
-        while i < len(processed_chunk):
 
-            if processed_chunk[i][column_name] == np.nan:
-                pass
-                # zatial neriesime
-            elif processed_chunk[i][column_name] != None:
-                prev = processed_chunk[i][column_name]
-            else:
-                j = i+1
-                while j < len(processed_chunk):
-                    if processed_chunk[j][column_name] != None:
-                        break
-                    j += 1
-                
-                if j == len(processed_chunk):
-                    # it would be possible here to check next chunk
-                    i = j
-                elif j-i-1 > max_approximated:
-                    i = j
-                    prev = processed_chunk[i][column_name]
+    # approximate missing values that can be approximated
+    for column_name in source_columns_names:
+
+        i = -1
+        previous = None
+        while i < len(chunk_rows_added):
+
+            if i == -1 or chunk_rows_added[i][column_name] == np.nan:
+                nfloat_missing = find_nearest_float(chunk_rows_added, i, column_name, "forward")
+                nfloat = nfloat_missing[0]
+                missing = nfloat_missing[1]
+
+                if nfloat == None:
+                    break
+                assert type(nfloat) == float
+                assert missing >= 0
+                if missing == 0:
+                    previous = nfloat
+                    i = i+1
                 else:
-                    next_value = processed_chunk[j][column_name]
-                    approximated_value = (prev_value+next_value)/2
-                    for k in range(i,j):
-                        processed_chunk[k][column_name] = approximated_value
-                    i = j
-                    prev = processed_chunk[i][column_name]
+                    nfloat_missing_2 = find_nearest_float(chunk_rows_added, i, column_name, "backward")
+                    nfloat_2 = nfloat_missing_2[0]
+                    missing_2 = nfloat_missing_2[1]
+                    assert missing_2 >= 0
+                    if missing > max_approximated:
+                        previous = nfloat
+                        i = i+1
+                    else:
+                        start = i+1
+                        end = i+missing
+                        approx = calculate_approximated_value(nfloat, nfloat_2)
+                        fill_range_by_value(chunk_rows_added, column_name, start, end, approx)
+                        previous = nfloat
+                        i = i+1
+            elif type(chunk_rows_added[i][column_name]) == float:
+                previous = chunk_rows_added[i][column_name]
+            else:
+                assert chunk_rows_added[i][column_name] == None
+                assert type(previous) == float
+                nfloat_missing = find_nearest_float(chunk_rows_added, i, column_name, "forward")
+                nfloat = nfloat_missing[0]
+                missing = nfloat_missing[1]
+                assert missing >= 0
+                if missing+1 <= max_approximated:
+                    following = nfloat
+                    start = i
+                    end = i+missing
+                    approx = calculate_approximated_value(previous, following)
+                    fill_range_by_value(chunk_rows_added, column_name, start, end, approx)
+                    previous = following
+                    i = i+missing
+                else:
+                    previous = nfloat
+                    i = i+missing
             
             i += 1
-
-    return processed_chunk
+    
+    return chunk_rows_added

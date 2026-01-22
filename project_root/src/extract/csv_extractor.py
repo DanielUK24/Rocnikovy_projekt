@@ -2,19 +2,19 @@ import csv
 
 class CSVExtractor:
     def __init__(self, csv_file_path):
-        
-        self._file = open(csv_file_path, mode = 'r', newline='', encoding='utf-8')
-        reader = csv.DictReader(self._file)
-        self._iterator = iter(reader)
+        with open(csv_file_path, mode='r', newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            self._rows = list(reader)
+
+        self._index = len(self._rows) - 1
 
     def get_next_row(self):
-        row = None
-        try:
-            row = next(self._iterator)
-        except StopIteration:
-            pass
+        if self._index < 0:
+            return None
+
+        row = self._rows[self._index]
+        self._index -= 1
         return row
-    
+
     def close(self):
-        self._file.close()
-        
+        pass

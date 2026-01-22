@@ -66,14 +66,13 @@ class Transformer:
 
             chunk = select_source_columns(chunk, source_columns_names, join_column_measurements, timestamp_source_column)
             chunk = format_timestamps(chunk, timestamp_source_column)
-            chunk = sorted(chunk, key=lambda d: d[timestamp_source_column], reverse=False)
+            #chunk = sorted(chunk, key=lambda d: d[timestamp_source_column], reverse=False)
             
             if self._regularize_bool:
                   chunk = regularize_timestamps(chunk, join_column_measurements, timestamp_source_column, source_columns_names)
             
             if self._correct_bool:
                   chunk = correct_measurements(chunk, source_columns, source_columns_names, timestamp_source_column, join_column_measurements, max_approximated)
-            
             self._loader.load(chunk)
 
       def _apply_chosen_trans(self):
