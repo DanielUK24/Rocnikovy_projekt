@@ -66,7 +66,7 @@ class Transformer:
 
             chunk = select_source_columns(chunk, source_columns_names, join_column_measurements, timestamp_source_column)
             chunk = format_timestamps(chunk, timestamp_source_column)
-            #chunk = sorted(chunk, key=lambda d: d[timestamp_source_column], reverse=False)
+            chunk = sorted(chunk, key=lambda d: d[timestamp_source_column])
             
             if self._regularize_bool:
                   chunk = regularize_timestamps(chunk, join_column_measurements, timestamp_source_column, source_columns, source_columns_names)
