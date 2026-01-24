@@ -2,6 +2,7 @@ import csv
 
 class CSVExtractor:
     def __init__(self, csv_file_path):
+        
         with open(csv_file_path, mode='r', newline='', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             self._rows = list(reader)

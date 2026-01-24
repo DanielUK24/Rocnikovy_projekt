@@ -10,22 +10,25 @@ import json
 class Transformer:
 
       def __init__(self):
-
-           self._config = self._load_config("config/config.json")
-           self._active_measurement = self._config.get("active_measurement")
-           active_measurement_path = self._config.get("measurements")[self._active_measurement].get("path")
-           self._extractor = CSVExtractor(active_measurement_path)
-           self._regularize_bool = False
-           self._correct_bool = False
+            
+            self._config = self._load_config("config/config.json")
+            self._active_measurement = self._config.get("active_measurement")
+            active_measurement_path = self._config.get("measurements")[self._active_measurement].get("path")
+            try:
+                  self._extractor = CSVExtractor(active_measurement_path)
+                  self._measurement_file_opened_succesfully = True
+            except:
+                  print("Measurement file with address %s not found." % (active_measurement_path))
+                  self._measurement_file_opened_succesfully = False
+            self._regularize_bool = False
+            self._correct_bool = False
       
       def _load_config(self, config_file):
             with open(config_file, 'r', encoding='utf-8') as f:
                   return json.load(f)
 
-      def _create_chunk_accumulators(self):
+      def _create_chunk_accumulators(self, codelist_path):
             type = self._config["measurements"][self._active_measurement]["type"]
-            source_codelist_id = self._config["measurements"][self._active_measurement]["target_dimensions"][0]["source_codelist_id"]
-            codelist_path = self._config["codelists"][source_codelist_id]["path"]
             codelist_extractor = CSVExtractor(codelist_path)
 
             chunk_accumulators = {}
@@ -76,11 +79,25 @@ class Transformer:
             self._loader.load(chunk)
 
       def _apply_chosen_trans(self):
-            chunk_accumulators = self._create_chunk_accumulators()
+            if not self._measurement_file_opened_succesfully:
+                  print("You cannot start transformation, since measurement file did not exist.")
+                  return
+            
+            # creating chunk accumulators
+            source_codelist_id = self._config["measurements"][self._active_measurement]["target_dimensions"][0]["source_codelist_id"]
+            codelist_path = self._config["codelists"][source_codelist_id]["path"]
+            try:
+                  chunk_accumulators = self._create_chunk_accumulators(codelist_path)
+            except:
+                  print("Codelist file with address %s not found." % (codelist_path))
+                  return
+
             join_column_measurements = self._config["measurements"][self._active_measurement]["target_dimensions"][0]["join_column_measurements"]
             chunk_size = self._config["chunk_size"]
-            self._loader = Loader(self._config)
 
+            self._loader = Loader(self._config)
+            
+            # accumulate measurements to accumulators and transform
             while True:
                   row = self._extractor.get_next_row()
                   if not row:
