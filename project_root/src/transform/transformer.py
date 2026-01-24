@@ -18,7 +18,7 @@ class Transformer:
                   self._extractor = CSVExtractor(active_measurement_path)
                   self._measurement_file_opened_succesfully = True
             except:
-                  print("Measurement file with address %s not found." % (active_measurement_path))
+                  print("Measurement file with path %s not found." % (active_measurement_path))
                   self._measurement_file_opened_succesfully = False
             self._regularize_bool = False
             self._correct_bool = False
@@ -89,7 +89,7 @@ class Transformer:
             try:
                   chunk_accumulators = self._create_chunk_accumulators(codelist_path)
             except:
-                  print("Codelist file with address %s not found." % (codelist_path))
+                  print("Codelist file with path %s not found." % (codelist_path))
                   return
 
             join_column_measurements = self._config["measurements"][self._active_measurement]["target_dimensions"][0]["join_column_measurements"]
