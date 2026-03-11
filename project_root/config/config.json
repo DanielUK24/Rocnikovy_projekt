@@ -1,14 +1,16 @@
 {
   "chunk_size": 30,
   "max_approximated": 5,
-  "active_measurement": 0,
+  "codelist_path": "data/raw/Beach_Water_and_Weather_Sensor_Locations_20251218.csv",
   "measurements": [
     {
       "id": 0,
       "type":"Water", 
       "path": "data/raw/water_cca_300_lines.csv",
+      "source_column_for_dim_sensors": "Beach Name",
+      "source_column_for_dim_dates": "Measurement Timestamp",
       "target_facts": {
-        "target_table": "measurements water", 
+        "target_table": "fct_measurements_water_300_lines", 
         "source_columns": [
           {
             "name":"Water Temperature",
@@ -41,30 +43,16 @@
             "max_value": 15
           }
         ]
-      },
-      "target_dimensions" : [
-        {
-          "target_table": "Sensor",
-          "source_column": "Beach Name",
-          "source_codelist_id": 0,
-          "join_column_measurements": "Beach Name",
-          "join_column_codelist": "Sensor Type",
-          "sensor_name_column_codelist": "Sensor Name",
-          "accumulator": "yes"
-        },
-        {
-          "target_table": "Timestamp",
-          "source_column": "Measurement Timestamp",
-          "time_dimension": "yes"
-        }
-      ]
+      }
     },
     {
       "id": 1,
       "type":"Water", 
       "path": "data/raw/Beach_Water_Quality_-_Automated_Sensors_20251016.csv",
+      "source_column_for_dim_sensors": "Beach Name",
+      "source_column_for_dim_dates": "Measurement Timestamp",
       "target_facts": {
-        "target_table": "measurements water", 
+        "target_table": "fct_measurements_water",
         "source_columns": [
           {
             "name":"Water Temperature",
@@ -97,30 +85,16 @@
             "max_value": 15
           }
         ]
-      },
-      "target_dimensions" : [
-        {
-          "target_table": "Sensor",
-          "source_column": "Beach Name",
-          "source_codelist_id": 0,
-          "join_column_measurements": "Beach Name",
-          "join_column_codelist": "Sensor Type",
-          "sensor_name_column_codelist": "Sensor Name",
-          "accumulator": "yes"
-        },
-        {
-          "target_table": "Timestamp",
-          "source_column": "Measurement Timestamp",
-          "time_dimension": "yes"
-        }
-      ]
+      }
     },
     {
       "id": 2,
       "type":"Weather", 
       "path": "data/raw/Beach_Weather_Stations_-_Automated_Sensors_20251016.csv",
+      "source_column_for_dim_sensors": "Station Name",
+      "source_column_for_dim_dates": "Measurement Timestamp",
       "target_facts": {
-        "target_table": "measurements weather",
+        "target_table": "fct_measurements_weather",
         "source_columns": [
           {  
             "name":"Air Temperature",
@@ -193,29 +167,21 @@
             "max_value": 16
           }
         ]
-      },
-      "target_dimensions" : [
-        {
-          "target_table": "Sensor",
-          "source_column": "Station Name",
-          "source_codelist_id": 0,
-          "join_column_measurements": "Station Name",
-          "join_column_codelist": "Sensor Type",
-          "sensor_name_column_codelist": "Sensor Name",
-          "accumulator": "yes"
-        },
-        {
-          "target_table": "Timestamp",
-          "source_column": "Measurement Timestamp",
-          "time_dimension": "yes"
-        }
-      ]
+      }
     }
   ],
-  "codelists": [
-    {
-      "id": 0, 
-      "name": "sensors", 
-      "path": "data/raw/Beach_Water_and_Weather_Sensor_Locations_20251218x.csv"}
-  ]
+  "target_dimensions" : {
+    "dim_sensors": {
+      "target_table": "dim_sensors",
+      "target_column": "sensor",
+      "id_column": "sensor_id",
+      "join_column_codelist": "Sensor Type",
+      "sensor_name_column_codelist": "Sensor Name"
+    },
+    "dim_dates": {
+      "target_table": "dim_dates",
+      "target_column": "date",
+      "id_column": "date_id"
+    }
+  }
 }
