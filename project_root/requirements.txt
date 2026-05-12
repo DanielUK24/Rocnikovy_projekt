@@ -2,3 +2,4 @@ python-dateutil
 numpy
 psycopg2-binary
 python-dotenv
+tkcalendar

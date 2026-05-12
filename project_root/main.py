@@ -10,8 +10,12 @@ create_tables(config)
 transformer = Transformer(config,0)
 transformer.apply_trans_all()
 
-#transformer = Transformer(config,1)
-#transformer.apply_trans_all()
+print("here")
 
-#transformer = Transformer(config,2)
-#transformer.apply_trans_all()
+transformer = Transformer(config,1)
+transformer.apply_trans_all()
+
+print("here")
+
+transformer = Transformer(config,2)
+transformer.apply_trans_all()

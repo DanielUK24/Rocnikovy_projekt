@@ -6,8 +6,8 @@ from psycopg import sql
 def create_tables(config):
 
     # initializing variables for table names (spaces are replaced by _)
-    dim_sensor_table_name = config["target_dimensions"]["dim_sensors"]["target_table"].replace(" ", "_")
-    dim_day_table_name = config["target_dimensions"]["dim_dates"]["target_table"].replace(" ", "_")
+    dim_sensors_table_name = config["target_dimensions"]["dim_sensors"]["target_table"].replace(" ", "_")
+    dim_dates_table_name = config["target_dimensions"]["dim_dates"]["target_table"].replace(" ", "_")
     
     # initializing variables for column names in dim sensors table (spaces are replaced by _)
     dim_sensors_sensor_column = config["target_dimensions"]["dim_sensors"]["target_column"].replace(" ", "_")
@@ -40,32 +40,75 @@ def create_tables(config):
                                         )""").format(
                                             sensor_id_column = sql.Identifier(dim_sensors_id_column),
                                             sensor_column = sql.Identifier(dim_sensors_sensor_column),
-                                            table_name = sql.Identifier(dim_sensor_table_name),
+                                            table_name = sql.Identifier(dim_sensors_table_name),
                                         )
 
-            query_dim_day = sql.SQL("""
+            query_dim_date = sql.SQL("""
                                     CREATE TABLE IF NOT EXISTS {table_name} (
-                                    {day_id_column} INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                                    {day_column} timestamp UNIQUE
+                                    {date_id_column} INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                                    {date_column} timestamp UNIQUE
                                     )""").format(
-                                        day_id_column = sql.Identifier(dim_dates_id_column),
-                                        day_column = sql.Identifier(dim_dates_date_column),
-                                        table_name = sql.Identifier(dim_day_table_name),
+                                        date_id_column = sql.Identifier(dim_dates_id_column),
+                                        date_column = sql.Identifier(dim_dates_date_column),
+                                        table_name = sql.Identifier(dim_dates_table_name),
                                     )
             
             cur.execute(query_dim_sensors)
-            cur.execute(query_dim_day)
+            cur.execute(query_dim_date)
+
+            # truncating tables for sensor and date dimensions
 
             cur.execute(
                 sql.SQL("TRUNCATE TABLE {}").format(
-                    sql.Identifier(dim_sensor_table_name)
+                    sql.Identifier(dim_sensors_table_name)
                     )
             )
 
             cur.execute(
                 sql.SQL("TRUNCATE TABLE {}").format(
-                    sql.Identifier(dim_day_table_name)
+                    sql.Identifier(dim_dates_table_name)
                     )
+            )
+
+            # commenting tables and columns for sensor dimension and date dimensions
+            cur.execute(
+                sql.SQL("COMMENT ON TABLE {} IS 'dim_sensors';").format(
+                    sql.Identifier(dim_sensors_table_name)
+                )
+            )
+
+            cur.execute(
+                sql.SQL("COMMENT ON COLUMN {}.{} IS 'sensor_id';").format(
+                    sql.Identifier(dim_sensors_table_name),
+                    sql.Identifier(dim_sensors_id_column)
+                )
+            )
+
+            cur.execute(
+                sql.SQL("COMMENT ON COLUMN {}.{} IS 'name';").format(
+                    sql.Identifier(dim_sensors_table_name),
+                    sql.Identifier(dim_sensors_sensor_column)
+                )
+            )
+
+            cur.execute(
+                sql.SQL("COMMENT ON TABLE {} IS 'dim_dates';").format(
+                    sql.Identifier(dim_dates_table_name)
+                )
+            )
+
+            cur.execute(
+                sql.SQL("COMMENT ON COLUMN {}.{} IS 'date_id';").format(
+                    sql.Identifier(dim_dates_table_name),
+                    sql.Identifier(dim_dates_id_column)
+                )
+            )
+
+            cur.execute(
+                sql.SQL("COMMENT ON COLUMN {}.{} IS 'date';").format(
+                    sql.Identifier(dim_dates_table_name),
+                    sql.Identifier(dim_dates_date_column)
+                )
             )
 
             # creating fact tables
@@ -95,28 +138,52 @@ def create_tables(config):
                     )
 
                 query_fct_measurements = sql.SQL("""
-                                                CREATE TABLE IF NOT EXISTS {table_name} (
-                                                measurement_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                                                {sensor_id_column} INTEGER,
-                                                {day_id_column} INTEGER,
-                                                {timestamp_column} timestamp,
-                                                {measurement_columns}
+                                                 CREATE TABLE IF NOT EXISTS {table_name} (
+                                                 measurement_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                                                 {sensor_id_column} INTEGER REFERENCES {dim_sensors}({sensor_id_column}),
+                                                 {date_id_column} INTEGER REFERENCES {dim_dates}({date_id_column}),
+                                                 {timestamp_column} timestamp,
+                                                 {measurement_columns}
                                                 )""").format(
                                                     table_name = sql.Identifier(fct_table_name),
                                                     sensor_id_column = sql.Identifier(dim_sensors_id_column),
-                                                    day_id_column = sql.Identifier(dim_dates_id_column),
+                                                    date_id_column = sql.Identifier(dim_dates_id_column),
                                                     timestamp_column = sql.Identifier(fct_table_timestamp_column),
-                                                    measurement_columns = sql.SQL(',').join(measurement_columns_identifiers)
+                                                    measurement_columns = sql.SQL(',').join(measurement_columns_identifiers),
+                                                    dim_sensors = sql.Identifier(dim_sensors_table_name),
+                                                    dim_dates = sql.Identifier(dim_dates_table_name)
+                                                )
+                
+                query_fct_measurements_comment = sql.SQL("""
+                                                comment on column {table_name}.{timestamp_column} is 'timestamp';
+                                                """).format(
+                                                    table_name = sql.Identifier(fct_table_name),
+                                                    timestamp_column = sql.Identifier(fct_table_timestamp_column),
                                                 )
 
-
                 cur.execute(query_fct_measurements)
+                cur.execute(query_fct_measurements_comment)
 
+                # commenting fact table
+                cur.execute(
+                    sql.SQL("COMMENT ON TABLE {} IS 'fct';").format(
+                        sql.Identifier(fct_table_name)
+                    )
+                )
+
+                # commenting column
+                cur.execute(
+                    sql.SQL("COMMENT ON COLUMN {}.{} IS 'timestamp';").format(
+                        sql.Identifier(fct_table_name),
+                        sql.Identifier(fct_table_timestamp_column)
+                    )
+                )
+
+                # truncating fact table
                 cur.execute(
                     sql.SQL("TRUNCATE TABLE {}").format(
                         sql.Identifier(fct_table_name)
                         )
                 )
-
 
             conn.commit()

@@ -14,13 +14,13 @@
         "source_columns": [
           {
             "name":"Water Temperature",
-            "min_value": -5,
+            "min_value": 5,
             "max_value": 40
           },
           {  
             "name": "Turbidity",
-            "min_value": 0,
-            "max_value": 1000
+            "min_value": 0.05,
+            "max_value": 50
           },
           {  
             "name": "Transducer Depth",
@@ -56,12 +56,12 @@
         "source_columns": [
           {
             "name":"Water Temperature",
-            "min_value": -5,
+            "min_value": 5,
             "max_value": 40
           },
           {  
             "name": "Turbidity",
-            "min_value": 0,
+            "min_value": 0.05,
             "max_value": 1000
           },
           {  
@@ -95,6 +95,10 @@
       "source_column_for_dim_dates": "Measurement Timestamp",
       "target_facts": {
         "target_table": "fct_measurements_weather",
+        "target_dimensions": [
+          "dim_dates",
+          "dim_sensors"
+        ],
         "source_columns": [
           {  
             "name":"Air Temperature",
@@ -173,7 +177,7 @@
   "target_dimensions" : {
     "dim_sensors": {
       "target_table": "dim_sensors",
-      "target_column": "sensor",
+      "target_column": "name",
       "id_column": "sensor_id",
       "join_column_codelist": "Sensor Type",
       "sensor_name_column_codelist": "Sensor Name"
@@ -181,7 +185,8 @@
     "dim_dates": {
       "target_table": "dim_dates",
       "target_column": "date",
-      "id_column": "date_id"
+      "id_column": "date_id",
+      "x_axis": true
     }
   }
 }
