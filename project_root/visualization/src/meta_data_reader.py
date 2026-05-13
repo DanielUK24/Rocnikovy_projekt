@@ -1,10 +1,13 @@
-from psycopg import Connection
 from psycopg import sql
+
+from src.db_conn_manager import DBConnectionManager
 
 class MetaDataReader:
 
-    @staticmethod
-    def get_fct_tables(conn: Connection):
+    def __init__(self):
+        self._conn_manager = DBConnectionManager()
+
+    def get_fct_tables(self):
         
         query = """
             SELECT c.relname AS table_name
@@ -17,33 +20,31 @@ class MetaDataReader:
                 AND d.description = %s
         """
 
-        with conn.cursor() as cur:
+        with self._conn_manager.get_connection().cursor() as cur:
             cur.execute(query, ("fct",))
             rows = cur.fetchall()
 
         return [row[0] for row in rows]
 
-    @staticmethod
-    def get_sensors(conn: Connection, fct_table):
+    def get_sensors(self, fct_table):
         
-        with conn.cursor() as cur:
+        with self._conn_manager.get_connection().cursor() as cur:
             query = sql.SQL("""
                 SELECT DISTINCT ds.{sensor}
                 FROM {fct_table} fct
                 JOIN {dim_sensors} ds ON fct.{sensor_id} = ds.{sensor_id}
             """).format(
-                sensor = sql.Identifier(MetaDataReader.get_dim_sensors_name(conn)),
+                sensor = sql.Identifier(self.get_dim_sensors_name()),
                 fct_table = sql.Identifier(fct_table),
-                dim_sensors = sql.Identifier(MetaDataReader.get_dim_sensors(conn)),
-                sensor_id = sql.Identifier(MetaDataReader.get_dim_sensors_id(conn))
+                dim_sensors = sql.Identifier(self.get_dim_sensors()),
+                sensor_id = sql.Identifier(self.get_dim_sensors_id())
             )
             cur.execute(query)
             rows = cur.fetchall()
 
         return [row[0] for row in rows]
 
-    @staticmethod
-    def get_metrics(conn: Connection, fct_table):
+    def get_metrics(self, fct_table):
         query = """
             SELECT a.attname
             FROM pg_catalog.pg_attribute a
@@ -74,42 +75,34 @@ class MetaDataReader:
                 AND (d.description IS NULL OR d.description != 'timestamp');
         """
 
-        with conn.cursor() as cur:
+        with self._conn_manager.get_connection().cursor() as cur:
             cur.execute(query, (fct_table,))
             rows = cur.fetchall()
 
         return [row[0] for row in rows]
 
-    @staticmethod
-    def get_timestamp_column(conn: Connection, fct_table):
-        return MetaDataReader._find_column_by_comments(conn, fct_table, "timestamp")
+    def get_timestamp_column(self, fct_table):
+        return self._find_column_in_table_by_comment(fct_table, "timestamp")
 
-    @staticmethod
-    def get_dim_sensors(conn: Connection):
-        return MetaDataReader._find_table_by_comment(conn, "dim_sensors")
+    def get_dim_sensors(self):
+        return self._find_table_by_comment("dim_sensors")
 
-    @staticmethod
-    def get_dim_sensors_id(conn: Connection):
-        return MetaDataReader._find_column_by_comments(conn, MetaDataReader.get_dim_sensors(conn), "sensor_id")
+    def get_dim_sensors_id(self):
+        return self._find_column_in_table_by_comment(self.get_dim_sensors(), "sensor_id")
 
-    @staticmethod
-    def get_dim_sensors_name(conn: Connection):
-        return MetaDataReader._find_column_by_comments(conn, MetaDataReader.get_dim_sensors(conn), "name")
+    def get_dim_sensors_name(self):
+        return self._find_column_in_table_by_comment(self.get_dim_sensors(), "name")
 
-    @staticmethod
-    def get_dim_dates(conn: Connection):
-        return MetaDataReader._find_table_by_comment(conn, "dim_dates")
+    def get_dim_dates(self):
+        return self._find_table_by_comment("dim_dates")
 
-    @staticmethod
-    def get_dim_dates_id(conn: Connection):
-        return MetaDataReader._find_column_by_comments(conn, MetaDataReader.get_dim_dates(conn), "date_id")
+    def get_dim_dates_id(self):
+        return self._find_column_in_table_by_comment(self.get_dim_dates(), "date_id")
 
-    @staticmethod
-    def get_dim_dates_date(conn: Connection):
-        return MetaDataReader._find_column_by_comments(conn, MetaDataReader.get_dim_dates(conn), "date")
+    def get_dim_dates_date(self):
+        return self._find_column_in_table_by_comment(self.get_dim_dates(), "date")
 
-    @staticmethod
-    def _find_table_by_comment(conn, comment):
+    def _find_table_by_comment(self, comment):
 
         query = """
             SELECT c.relname AS table_name
@@ -123,7 +116,7 @@ class MetaDataReader:
             LIMIT 2;
         """
 
-        with conn.cursor() as cur:
+        with self._conn_manager.get_connection().cursor() as cur:
             cur.execute(query, (comment,))
             rows = cur.fetchall()
 
@@ -136,8 +129,7 @@ class MetaDataReader:
 
         return rows[0][0]
 
-    @staticmethod
-    def _find_column_by_comments(conn, table_name, column_comment):
+    def _find_column_in_table_by_comment(self, table_name, column_comment):
 
         query = """
             SELECT a.attname AS column_name
@@ -154,7 +146,7 @@ class MetaDataReader:
             LIMIT 2;
         """
 
-        with conn.cursor() as cur:
+        with self._conn_manager.get_connection().cursor() as cur:
             cur.execute(query, (table_name, column_comment))
             rows = cur.fetchall()
 

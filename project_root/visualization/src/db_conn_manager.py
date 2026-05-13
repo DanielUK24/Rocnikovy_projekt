@@ -29,7 +29,5 @@ class DBConnectionManager:
             )
             return conn
         except psycopg.Error as e:
-            # dtd tato vynimka tu je zatial iba tak
-            # dtd bude sa este riesit poriadnejsie pri rieseni vynimiek
             raise RuntimeError(f"Failed to connect to database: {e}")
         
