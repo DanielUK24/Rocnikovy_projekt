@@ -1,23 +1,26 @@
 import psycopg
 
 class DBConnectionManager:
+    instance = None
     _connection = None
 
-    @classmethod
+    def __new__(cls):
+        if cls.instance is None:
+            cls.instance = super().__new__(cls)
+        return cls.instance
+
     def init(cls, host, port, database, username, password):
         cls._connection = cls._create_connection(host, port, database, username, password)
         
-    @classmethod
     def get_connection(cls):
         if cls._connection is None:
             raise Exception("Connection not initialized")
         return cls._connection
     
-    @staticmethod
     def _create_connection(host, port, database, username, password):
         try:
             conn = psycopg.connect(
-                host, host,
+                host=host,
                 port=port,
                 dbname=database,
                 user=username,
