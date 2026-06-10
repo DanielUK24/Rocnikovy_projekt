@@ -31,11 +31,12 @@ class MainWindow(QMainWindow):
         self.resize(1000,500)
         self._build_ui()
 
-    def show_prep(self):
+    def show(self): 
         self._fact_selection.clear()
         self._fact_selection.addItems(self._meta_data_reader.get_fct_tables())
         self._clearLayout(self._sensor_layout)
         self._clearLayout(self._metric_layout)
+        super().show()
 
     def set_conn_window(self, conn_window):
         self._conn_window = conn_window
@@ -84,23 +85,23 @@ class MainWindow(QMainWindow):
         configuration_layout = QGridLayout()
         configuration.setLayout(configuration_layout)
 
-        # start date label
+        # start_datetime date label
         start_label = QLabel('Start date')
         start_label.setAlignment(Qt.AlignLeft)
         configuration_layout.addWidget(start_label,8,0)
 
-        # start date selection
+        # start_datetime date selection
         self._start_date = QDateEdit()
         self._start_date.setCalendarPopup(True)
         self._start_date.setDate(QDate(2014,6,1))
         configuration_layout.addWidget(self._start_date,10,0)
 
-        # end date label
+        # end_datetime date label
         end_label = QLabel('End date')
         end_label.setAlignment(Qt.AlignLeft)
         configuration_layout.addWidget(end_label,8,1)
 
-        # end date selection
+        # end_datetime date selection
         self._end_date = QDateEdit()
         self._end_date.setCalendarPopup(True)
         self._end_date.setDate(QDate(2014,6,10))
@@ -177,11 +178,14 @@ class MainWindow(QMainWindow):
         if self._current_fact_table == None:
             raise Exception("Fact table not chosen")
 
-        start = self._start_date.date().toPython()
-        end = self._end_date.date().toPython()
+        start_date = self._start_date.date().toPython()
+        end_date = self._end_date.date().toPython()
 
-        start = datetime(2014, 7, 27, 0, 0)
-        end = datetime(2014, 7, 27, 0, 0)
+        start_datetime = datetime(start_date.year, start_date.month, start_date.day)
+        end_datetime = datetime(end_date.year, end_date.month, end_date.day)
+
+        if start_datetime > end_datetime:
+            raise Exception("Start date after end date")
 
         chosen_sensors = []
         chosen_metrics = []
@@ -195,39 +199,44 @@ class MainWindow(QMainWindow):
                 chosen_metrics.append(cb.text())
 
         if len(chosen_sensors) == 0 or len(chosen_metrics) == 0:
-            # zmena osi x
+            # iba zmena osi x
             return
         
-        if len(chosen_sensors) == 1 and len(chosen_metrics) > 0:
-            timestamp_measurements = self._query_service.get_data_one_sensor_many_metrics(self._current_fact_table, chosen_sensors[1], chosen_metrics, start, end)
+        # one sensor, many metrics
+        elif len(chosen_sensors) == 1 and len(chosen_metrics) > 0:    
 
-            # creating list for x, y axis
+            timestamp_measurements = self._query_service.get_data_one_sensor_many_metrics(self._current_fact_table, chosen_sensors[0], chosen_metrics, start_datetime, end_datetime)
+
+            # creating list for x axis
+            # creating list for y axis
             i = 0
             x = []
-            number_of_plots = len(chosen_metrics)      
-            y = [[] for _ in range(number_of_plots)]
-            current = start
-            while current <= end + timedelta(days=1):
-                x.append(current)
-
-                if i < len(timestamp_measurements) and timestamp_measurements[i][0] == current:
-                    for j in range(number_of_plots):
-                        y[j].append(timestamp_measurements[i][j+1])
+            chosen_metrics_len = len(chosen_metrics)
+            y = [[] for _ in range(chosen_metrics_len)]
+            current_datetime = start_datetime
+            while current_datetime < end_datetime + timedelta(days=1):
+                
+                x.append(current_datetime)
+                
+                if i < len(timestamp_measurements) and timestamp_measurements[i][0] == current_datetime:
+                    for j in range(1, chosen_metrics_len+1):
+                        y[j].append(timestamp_measurements[i][j])
                     i += 1
                 else:
-                    for j in range(number_of_plots):
+                    for j in range(chosen_metrics_len):
                         y[j].append(np.nan)
-                current += timedelta(hours=1)
+                current_datetime += timedelta(hours=1)
 
+        # one metric, many sensors
         elif len(chosen_sensors) > 0 and len(chosen_metrics) == 1:
 
-            metric_values_for_sensors = self._query_service.get_data_many_sensors_one_metric(self._current_fact_table, chosen_sensors, chosen_metrics[0], start, end)
+            metric_values_for_sensors = self._query_service.get_data_many_sensors_one_metric(self._current_fact_table, chosen_sensors, chosen_metrics[0], start_datetime, end_datetime)
 
             x = []
-            current = start
-            while current <= end + timedelta(days=1):
-                x.append(current)
-                current += timedelta(hours=1)
+            current_datetime = start_datetime
+            while current_datetime <= end_datetime + timedelta(days=1):
+                x.append(current_datetime)
+                current_datetime += timedelta(hours=1)
 
             indices = [0 for _ in range(len(chosen_sensors))]
             y = [[] for _ in range(len(chosen_sensors))]
@@ -243,6 +252,10 @@ class MainWindow(QMainWindow):
                 self._sc.plot(x, y[i], label=chosen_sensors[i])
             self._sc.plot.set_xlabel('Time')
             self._sc.plot.set_ylabel(chosen_metrics[0])
+
+        else:
+            # many to many vynimka
+            pass
     
 
     def _on_set_clicked(self):

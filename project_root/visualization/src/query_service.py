@@ -1,4 +1,3 @@
-import psycopg
 from psycopg import sql
 
 from src.db_conn_manager import DBConnectionManager
@@ -14,7 +13,7 @@ class QueryService:
 
         metrics_sql_identifiers = []
         for metric in metrics:
-            metrics_sql_identifiers.append(sql.SQL("fct",metric))
+            metrics_sql_identifiers.append(sql.Identifier("f", metric))
 
         # loading timestamps and measurements from database
         query = sql.SQL("""

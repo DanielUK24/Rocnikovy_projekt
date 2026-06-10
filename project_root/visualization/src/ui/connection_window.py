@@ -81,7 +81,6 @@ class ConnectionWindow(QMainWindow):
 
         try:
             self._conn_manager.init(host, port, database, username, password)
-            self._main_window.show_prep()
             self.close()
             self._main_window.show()
         except:
