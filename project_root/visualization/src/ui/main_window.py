@@ -1,4 +1,6 @@
 import os
+import numpy as np
+from datetime import datetime, timedelta
 
 os.environ["QT_API"] = "PySide6"
 
@@ -9,6 +11,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 
 from src.meta_data_reader import MetaDataReader
+from src.query_service import QueryService
 
 class MplCanvas(FigureCanvas):
 
@@ -22,9 +25,20 @@ class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._meta_data_reader = MetaDataReader()
+        self._query_service = QueryService()
+        self._current_fact_table = None
         self.setWindowTitle('Visualizator')
         self.resize(1000,500)
         self._build_ui()
+
+    def show_prep(self):
+        self._fact_selection.clear()
+        self._fact_selection.addItems(self._meta_data_reader.get_fct_tables())
+        self._clearLayout(self._sensor_layout)
+        self._clearLayout(self._metric_layout)
+
+    def set_conn_window(self, conn_window):
+        self._conn_window = conn_window
 
     def _build_ui(self):
 
@@ -57,7 +71,6 @@ class MainWindow(QMainWindow):
 
         # fact table selection
         self._fact_selection = QComboBox()
-        self._fact_selection.addItems(self._meta_data_reader.get_fct_tables())
         fct_table_selection_layout.addWidget(self._fact_selection)
 
         # show button
@@ -135,17 +148,13 @@ class MainWindow(QMainWindow):
         configuration_layout.addWidget(load_button,30,0)
 
         # graph part
-        sc = MplCanvas(self, width=5, height=4, dpi=100)
-        #sc.axes.plot([0,1,2,3,4], [10,1,20,3,40])
-        container_layout.addWidget(sc)
-
-    def _read_filter(self):
-        pass
+        self._sc = MplCanvas(self, width=5, height=4, dpi=100)
+        container_layout.addWidget(self._sc)
 
     def _on_show_clicked(self):
-        act_table = self._fact_selection.currentText()
-        sensors = self._meta_data_reader.get_sensors(act_table)
-        metrics = self._meta_data_reader.get_metrics(act_table)
+        self._current_fact_table = self._fact_selection.currentText()
+        sensors = self._meta_data_reader.get_sensors(self._current_fact_table)
+        metrics = self._meta_data_reader.get_metrics(self._current_fact_table)
 
         self._metric_checkboxes = []
         self._sensor_checkboxes = []
@@ -165,14 +174,79 @@ class MainWindow(QMainWindow):
 
     def _on_load_clicked(self):
 
-        filter = self._read_filter()
+        if self._current_fact_table == None:
+            raise Exception("Fact table not chosen")
 
-        x, y = self.data_service.get_chart_data(filter)
+        start = self._start_date.date().toPython()
+        end = self._end_date.date().toPython()
 
-        self.chart_service.plot(self.canvas, x, y)
+        start = datetime(2014, 7, 27, 0, 0)
+        end = datetime(2014, 7, 27, 0, 0)
+
+        chosen_sensors = []
+        chosen_metrics = []
+
+        for cb in self._sensor_checkboxes:
+            if cb.isChecked():
+                chosen_sensors.append(cb.text())
+        
+        for cb in self._metric_checkboxes:
+            if cb.isChecked():
+                chosen_metrics.append(cb.text())
+
+        if len(chosen_sensors) == 0 or len(chosen_metrics) == 0:
+            # zmena osi x
+            return
+        
+        if len(chosen_sensors) == 1 and len(chosen_metrics) > 0:
+            timestamp_measurements = self._query_service.get_data_one_sensor_many_metrics(self._current_fact_table, chosen_sensors[1], chosen_metrics, start, end)
+
+            # creating list for x, y axis
+            i = 0
+            x = []
+            number_of_plots = len(chosen_metrics)      
+            y = [[] for _ in range(number_of_plots)]
+            current = start
+            while current <= end + timedelta(days=1):
+                x.append(current)
+
+                if i < len(timestamp_measurements) and timestamp_measurements[i][0] == current:
+                    for j in range(number_of_plots):
+                        y[j].append(timestamp_measurements[i][j+1])
+                    i += 1
+                else:
+                    for j in range(number_of_plots):
+                        y[j].append(np.nan)
+                current += timedelta(hours=1)
+
+        elif len(chosen_sensors) > 0 and len(chosen_metrics) == 1:
+
+            metric_values_for_sensors = self._query_service.get_data_many_sensors_one_metric(self._current_fact_table, chosen_sensors, chosen_metrics[0], start, end)
+
+            x = []
+            current = start
+            while current <= end + timedelta(days=1):
+                x.append(current)
+                current += timedelta(hours=1)
+
+            indices = [0 for _ in range(len(chosen_sensors))]
+            y = [[] for _ in range(len(chosen_sensors))]
+            for time in x:
+                for i in range(len(chosen_sensors)):
+                    if indices[i] < len(metric_values_for_sensors[i]) and metric_values_for_sensors[i][indices[i]][0] == time:
+                        y[i].append(metric_values_for_sensors[i][indices[i]][1])
+                        indices[i] += 1
+                    else:
+                        y[i].append(np.nan)
+
+            for i in range(len(chosen_sensors)):
+                self._sc.plot(x, y[i], label=chosen_sensors[i])
+            self._sc.plot.set_xlabel('Time')
+            self._sc.plot.set_ylabel(chosen_metrics[0])
+    
 
     def _on_set_clicked(self):
-        self._set_connection()
+        self._conn_window.show()
 
     def _clearLayout(self, layout):
         if isinstance(layout, QLayout):

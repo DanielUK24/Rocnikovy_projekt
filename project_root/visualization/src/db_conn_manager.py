@@ -17,17 +17,14 @@ class DBConnectionManager:
             raise Exception("Connection not initialized")
         return cls._connection
     
-    def _create_connection(host, port, database, username, password):
-        try:
-            conn = psycopg.connect(
-                host=host,
-                port=port,
-                dbname=database,
-                user=username,
-                password=password,
-                connect_timeout=5
-            )
-            return conn
-        except psycopg.Error as e:
-            raise RuntimeError(f"Failed to connect to database: {e}")
+    def _create_connection(self, host, port, database, username, password):
+        # tu by asi ani nemalo byt try a except, staci ak to odchyti conn window
+        conn = psycopg.connect(
+            host=host,
+            port=port,
+            dbname=database,
+            user=username,
+            password=password
+        )
+        return conn
         

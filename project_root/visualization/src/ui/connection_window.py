@@ -1,16 +1,18 @@
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QPushButton, QToolButton
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QPushButton, QToolButton, QGroupBox
+from PySide6.QtCore import Qt
 
-from src.models.connection_data import ConnectionData
+from src.db_conn_manager import DBConnectionManager
 
 class ConnectionWindow(QMainWindow):
-    succesful_connection = Signal(object)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._conn_manager = DBConnectionManager()
         self.setWindowTitle('Visualizator')
-
         self._build_ui()
+
+    def set_main_window(self, main_window):
+        self._main_window = main_window
 
     def _build_ui(self):
 
@@ -18,7 +20,7 @@ class ConnectionWindow(QMainWindow):
         self.setCentralWidget(container)
         container_layout = QVBoxLayout(container)
 
-        connection_info = QWidget()
+        connection_info = QGroupBox("Database connection")
         connection_layout = QGridLayout(connection_info)
         container_layout.addWidget(connection_info)
 
@@ -53,10 +55,16 @@ class ConnectionWindow(QMainWindow):
         toggle_button.clicked.connect(self._toggle_password)
         connection_layout.addWidget(toggle_button,20,2)
 
-
         connect_button = QPushButton('Connect')
         connect_button.clicked.connect(self._on_connect_clicked)
         connection_layout.addWidget(connect_button,30,0)
+
+        # autofill
+        self._host_line.setText("localhost")
+        self._port_line.setText("5432")
+        self._database_line.setText("postgres")
+        self._username_line.setText("postgres")
+        self._password_line.setText("mojpostgres2025")
 
     def set_inputs(self, connection_data):
         self._host_line.setText(connection_data.host)
@@ -65,13 +73,21 @@ class ConnectionWindow(QMainWindow):
         self._username_line.setText(connection_data.username)
 
     def _on_connect_clicked(self):
+        host = self._host_line.text()
+        port = self._port_line.text()
+        database = self._database_line.text()
+        username = self._username_line.text()
+        password = self._password_line.text()
 
-        # verifikacia
+        try:
+            self._conn_manager.init(host, port, database, username, password)
+            self._main_window.show_prep()
+            self.close()
+            self._main_window.show()
+        except:
+            print("chybne prihlasovacie udaje")
+            # zavolanie error handlera na odhandlovanie chyby
 
-        # tieto data pojdu z UI
-        connection_data = ConnectionData('localhost','5432','admin','my_db')
-
-        self.succesful_connection.emit(connection_data)
 
     def _toggle_password(self):
         if (self._password_line.echoMode() == QLineEdit.Password):
