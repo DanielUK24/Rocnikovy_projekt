@@ -107,7 +107,7 @@ class MainWindow(QMainWindow):
         main_container_layout.addWidget(control_container)
 
         graph_container = QWidget()
-        graph_container.setMinimumWidth(400)
+        graph_container.setMinimumWidth(600)
         graph_container_layout = QVBoxLayout()
         graph_container.setLayout(graph_container_layout)
         main_container_layout.addWidget(graph_container)
