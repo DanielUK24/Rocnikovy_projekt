@@ -30,11 +30,6 @@ Pre zmenu spojenia ku databáze je potrebné stlačiť tlačidlo Set connection.
 
 ## ETL
 
-## Requirements
-
-- Python 3.10+
-- PostgreSQL 13+
-
 ## Running the aplication
 - po správnom nastavení .env a .config (vid nizsie) spustite main.py
 - v main.py sa najprv vytvorí inštancia transformer triedy Transformer následne sa príkazom:
@@ -46,7 +41,7 @@ Pre zmenu spojenia ku databáze je potrebné stlačiť tlačidlo Set connection.
 
 ## Credentials to database
 
-Vytvorte `.env` súbor v project_root na základe `.env.example`:
+Vytvorte .env súbor v project_root na základe .env.example:
 
 DB_HOST = ""
 DB_NAME = ""

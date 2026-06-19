@@ -14,12 +14,12 @@ create_tables(config, shared_config)
 
 print("Tables created")
 
+transformer = Transformer(config,0)
+transformer.apply_trans_all()
+
+print("Transformation of measurement with id 0 completed")
+
 transformer = Transformer(config,1)
 transformer.apply_trans_all()
 
-print("Transformation of measurement 1 completed")
-
-transformer = Transformer(config,2)
-transformer.apply_trans_all()
-
-print("Transformation of measurement 2 completed")
+print("Transformation of measurement with id 1 completed")

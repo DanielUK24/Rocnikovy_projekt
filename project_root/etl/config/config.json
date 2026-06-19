@@ -6,48 +6,6 @@
     {
       "id": 0,
       "type":"Water", 
-      "path": "data/water_cca_300_lines.csv",
-      "source_column_for_dim_sensors": "Beach Name",
-      "source_column_for_dim_dates": "Measurement Timestamp",
-      "target_facts": {
-        "target_table": "fct_measurements_water_300_lines", 
-        "source_columns": [
-          {
-            "name":"Water Temperature",
-            "min_value": 5,
-            "max_value": 40
-          },
-          {  
-            "name": "Turbidity",
-            "min_value": 0.05,
-            "max_value": 50
-          },
-          {  
-            "name": "Transducer Depth",
-            "min_value": 0,
-            "max_value": 50
-          },
-          {  
-            "name": "Wave Height",
-            "min_value": 0,
-            "max_value": 20
-          },
-          {  
-            "name": "Wave Period",
-            "min_value": 0,
-            "max_value": 30
-          },
-          {  
-            "name": "Battery Life",
-            "min_value": 0,
-            "max_value": 15
-          }
-        ]
-      }
-    },
-    {
-      "id": 1,
-      "type":"Water", 
       "path": "data/Beach_Water_Quality_-_Automated_Sensors_20251016.csv",
       "source_column_for_dim_sensors": "Beach Name",
       "source_column_for_dim_dates": "Measurement Timestamp",
@@ -88,7 +46,7 @@
       }
     },
     {
-      "id": 2,
+      "id": 1,
       "type":"Weather", 
       "path": "data/Beach_Weather_Stations_-_Automated_Sensors_20251016.csv",
       "source_column_for_dim_sensors": "Station Name",

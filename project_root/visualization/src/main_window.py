@@ -12,6 +12,8 @@ from PySide6.QtGui import QCloseEvent
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 
+import matplotlib.dates as mdates
+
 from src.db_conn_manager import DBConnectionManager
 from src.meta_data_reader import MetaDataReader
 from src.query_service import QueryService
@@ -19,9 +21,8 @@ from src.query_service import QueryService
 class MplCanvas(FigureCanvas):
 
     def __init__(self, parent=None, width=5, height=4, dpi=100):
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_subplot(111)
-        super().__init__(fig)
+        self.fig = Figure(figsize=(width, height), dpi=dpi)
+        super().__init__(self.fig)
 
 class CustomDialog(QDialog):
     def __init__(self, parent, message):
@@ -54,19 +55,9 @@ class MainWindow(QMainWindow):
 
         # Graph
         self._canvas = MplCanvas(self, width=25, height=4, dpi=100)
-        self._canvas.axes.yaxis.set_visible(False)
-        self._canvas.axes.xaxis.set_visible(False)
-        self._canvas.axes.set_xlabel('Date')
         self._build_ui()
 
-        self._all_twin_axes = []
-        for _ in range(10):
-            new_twin_axis = self._canvas.axes.twinx()
-            new_twin_axis.yaxis.set_visible(False)
-            new_twin_axis.set_ylim(bottom=0, top=10)
-            self._all_twin_axes.append(new_twin_axis)
-
-        self._colors = [
+        self._plot_colors = [
             "royalblue",
             "tomato",
             "mediumseagreen",
@@ -81,6 +72,7 @@ class MainWindow(QMainWindow):
 
     def show(self): 
         self._fact_selection.clear()
+        self._current_fact_table = None
         try:
             self._fact_selection.addItems(self._meta_data_reader.get_fct_tables())
         except psycopg.OperationalError:
@@ -89,7 +81,8 @@ class MainWindow(QMainWindow):
             return
         self._clearLayout(self._sensor_layout)
         self._clearLayout(self._metric_layout)
-        self._clear_axes()
+        self._canvas.fig.clear()
+        self._canvas.draw()
         super().show()
 
     def closeEvent(self, event: QCloseEvent):
@@ -251,21 +244,9 @@ class MainWindow(QMainWindow):
             self._metric_checkboxes.append(cb)
             self._metric_layout.addWidget(cb)
 
-    def _clear_axes(self):
-        for axes in self._all_twin_axes:
-            axes.yaxis.set_visible(False)
-            axes.cla()
-        # musel som tu pridat tento druhy cyklus na to, aby to spravne cistilo osi
-        # mozno sa to da aj inak, ale neviem teraz na to prist
-        for axes in self._all_twin_axes:
-            axes.cla()
-        for legend in self._canvas.figure.legends:
-            legend.remove()
-        self._canvas.figure.subplots_adjust(right=0.9, left=0.03)
-        self._canvas.axes.xaxis.set_visible(False)
-        self._canvas.draw()
-
     def _on_load_clicked(self):
+
+        # getting and validating parameters from GUI
 
         if self._current_fact_table == None:
             dlg = CustomDialog(self, "Please select a fact table first")
@@ -295,23 +276,29 @@ class MainWindow(QMainWindow):
                 chosen_metrics.append(cb.text())
 
         if len(chosen_metrics) > 10:
-            dlg = CustomDialog(self, "Please select maximum 10 metrics")
+            dlg = CustomDialog(self, "Please select maximum 10 items from right column")
             dlg.exec()
             return
 
         if len(chosen_sensors) == 0:
-            dlg = CustomDialog(self, "Please select at least one sensor")
+            dlg = CustomDialog(self, "Please select at least one item from left column")
             dlg.exec()
             return
         
         if len(chosen_metrics) == 0:
-            dlg = CustomDialog(self, "Please select at least one metric")
+            dlg = CustomDialog(self, "Please select at least one item from right column")
             dlg.exec()
             return
+        
+        # we have 3 options based on selected combination of sensors and metrics
+        # 1st option - one metric, many sensors
+        # 2nd option - one sensor, many metrics
+        # 3rd option - many sensors, many metrics - error
 
-        # one metric, many sensors
-        elif len(chosen_sensors) > 0 and len(chosen_metrics) == 1:
+        # 1st option - one metric, many sensors
+        if len(chosen_sensors) > 0 and len(chosen_metrics) == 1:
 
+            # loading data from database
             try:
                 metric_values_for_sensors = self._query_service.get_data_many_sensors_one_metric(self._current_fact_table, chosen_sensors, chosen_metrics[0], start_datetime, end_datetime)
             except psycopg.OperationalError:
@@ -319,6 +306,7 @@ class MainWindow(QMainWindow):
                 dlg.exec()
                 return
 
+            # preparing data
             x = []
             current_datetime = start_datetime
             while current_datetime <= end_datetime + timedelta(days=1):
@@ -334,39 +322,40 @@ class MainWindow(QMainWindow):
                         indices[i] += 1
                     else:
                         y[i].append(np.nan)
-                
-            self._clear_axes()
-            self._canvas.axes.xaxis.set_visible(True)
-
-            y_len = len(y)
-
-            self._all_twin_axes[0].set_ylabel(chosen_metrics[0], color="black")
-            self._all_twin_axes[0].yaxis.set_label_position("right")
             
-            for i in range(y_len):
-                print(x)
-                print()
-                print(y)
-                print("\n\n\n\n")
-                self._all_twin_axes[0].plot(x, y[i], self._colors[i], label=chosen_sensors[i])
+            # plotting graph
+
+            self._canvas.fig.clear()
+
+            main_ax = self._canvas.fig.add_subplot(111)
+
+            locator = mdates.AutoDateLocator()
+            formatter = mdates.ConciseDateFormatter(locator)
+
+            main_ax.xaxis.set_major_locator(locator)
+            main_ax.xaxis.set_major_formatter(formatter)
+
+            main_ax.set_ylabel(chosen_metrics[0], color="black")
+            main_ax.set_xlabel("Date", color="black")
+            main_ax.yaxis.set_label_position("right")
+            main_ax.yaxis.set_ticks_position("right")
+            main_ax.tick_params('y', colors='black', labelsize=8)
+            self._canvas.figure.subplots_adjust(right=0.9, left=0.03)
+            
+            for i in range(len(y)):
+                main_ax.plot(x, y[i], self._plot_colors[i], label=chosen_sensors[i])
+
+            main_ax.set_xlim(x[0], x[-1])
 
             # creating legend
-            lines = []
-            labels = []
-            for i in range(y_len):
-                new_lines, new_labels = self._all_twin_axes[i].get_legend_handles_labels()
-                lines.extend(new_lines)
-                labels.extend(new_labels)
-            self._canvas.figure.legend(lines, labels, loc='upper center', ncol=4)
-
-            self._all_twin_axes[0].tick_params('y', colors='black', labelsize=8)
-
-            self._all_twin_axes[0].yaxis.set_visible(True)
+            self._canvas.figure.legend(loc='upper center', ncol=4)
 
             self._canvas.draw()
         
-        # one sensor, many metrics
+        # 2nd option - one sensor, many metrics
         elif len(chosen_sensors) == 1 and len(chosen_metrics) > 0:    
+
+            # loading data from database
 
             try:
                 timestamp_measurements = self._query_service.get_data_one_sensor_many_metrics(self._current_fact_table, chosen_sensors[0], chosen_metrics, start_datetime, end_datetime)
@@ -374,6 +363,8 @@ class MainWindow(QMainWindow):
                 dlg = CustomDialog(self, "Database connection failed.")
                 dlg.exec()
                 return
+
+            # preparing data
 
             # creating list for x axis
             # creating list for y axis
@@ -395,27 +386,39 @@ class MainWindow(QMainWindow):
                         y[j].append(np.nan)
                 current_datetime += timedelta(hours=1)
 
-            self._clear_axes()
-            self._canvas.axes.xaxis.set_visible(True)
+            # plotting graph
+
+            self._canvas.fig.clear()
+            main_ax = self._canvas.fig.add_subplot(111)
+            main_ax.yaxis.set_visible(False)
+            main_ax.set_xlabel("Date", color="black")
+
+            locator = mdates.AutoDateLocator()
+            formatter = mdates.ConciseDateFormatter(locator)
+
+            main_ax.xaxis.set_major_locator(locator)
+            main_ax.xaxis.set_major_formatter(formatter)
 
             for i in range(y_len):
 
-                self._all_twin_axes[i].plot(x, y[i], self._colors[i], label=chosen_metrics[i])
-                self._all_twin_axes[i].spines['right'].set_position(('outward', i*45))
-                self._all_twin_axes[i].set_ylabel(chosen_metrics[i], color=self._colors[i], fontsize=8)
-                self._all_twin_axes[i].yaxis.set_label_position("right")
-                self._all_twin_axes[i].tick_params('y', colors=self._colors[i], labelsize=8)
-                self._all_twin_axes[i].yaxis.set_visible(True)
+                new_twin_ax = main_ax.twinx()
+                new_twin_ax.plot(x, y[i], self._plot_colors[i], label=chosen_metrics[i])
+                new_twin_ax.spines['right'].set_position(('outward', i*45))
+                new_twin_ax.set_ylabel(chosen_metrics[i], color=self._plot_colors[i], fontsize=8)
+                new_twin_ax.yaxis.set_label_position("right")
+                new_twin_ax.tick_params('y', colors=self._plot_colors[i], labelsize=8)
+                new_twin_ax.yaxis.set_visible(True)
 
             self._canvas.figure.subplots_adjust(right=0.9 - (y_len - 1) * 0.06, left=0.03)
+            main_ax.set_xlim(x[0], x[-1])
 
             self._canvas.draw()
 
+        # 3rd option - many sensors, many metrics - error
         else:
             dlg = CustomDialog(self, "Select one sensor with multiple metrics, or one metric with multiple sensors")
             dlg.exec()
             return
-    
 
     def _on_set_clicked(self):
         self._conn_window.show()

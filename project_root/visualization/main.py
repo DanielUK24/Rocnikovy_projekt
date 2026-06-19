@@ -2,6 +2,7 @@ import sys
 import json
 
 from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
 
 from src.main_window import MainWindow
 from src.connection_window import ConnectionWindow
@@ -11,6 +12,7 @@ with open(shared_config_file, 'r', encoding='utf-8') as f:
     shared_config = json.load(f)
 
 app = QApplication(sys.argv)
+app.setWindowIcon(QIcon("icons/app_icon.png"))
 
 conn_window = ConnectionWindow()
 main_window = MainWindow(shared_config)
