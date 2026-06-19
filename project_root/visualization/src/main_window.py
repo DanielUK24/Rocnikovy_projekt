@@ -181,7 +181,7 @@ class MainWindow(QMainWindow):
         configuration_layout.addWidget(self._end_date,10,1)
 
         # sensor and metric selection label
-        sensor_metric_label = QLabel("Select")
+        sensor_metric_label = QLabel("Select ⓘ")
         sensor_metric_label.setAlignment(Qt.AlignLeft)
         sensor_metric_label.setToolTip('''
             Choose items so that one list has exactly one selection 
@@ -220,11 +220,6 @@ class MainWindow(QMainWindow):
         load_button = QPushButton('Load')
         load_button.clicked.connect(self._on_load_clicked)
         configuration_layout.addWidget(load_button,30,0)
-
-        # clear 
-        load_button = QPushButton('Clear')
-        load_button.clicked.connect(self._clear_axes)
-        configuration_layout.addWidget(load_button,30,1)
 
     def _on_show_clicked(self):
         if self._fact_selection.count() == 0:

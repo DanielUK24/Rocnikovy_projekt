@@ -1,3 +1,35 @@
+Projekt sa skladá z dvoch častí:
+
+    1. ETL
+    - načítanie dát zo vstupných .csv súborov, detekcie chýb, oprava chýb
+    načítanie do databázy
+
+    2. Visualization
+    - GUI, cez ktoré sa používateľ pripojí k databáze, z ktorej je možné načítať a vizualizovať
+    dáta, ktoré sú výsledkom spracovania pomocou ETL pipeline
+
+Priečinok project_root obsahuje okrem iného nasledujúce priečinky:
+    - elt - časť projektu ETL pipeline s vlastným main.py
+    - Visualization - časť projektu Vizualizácia s vlastným main.py
+    - shared - obsahuje súbor config.json, ktorý slúži ako kontrakt medzi ELL a Visualization
+
+Následne osobitne podrobnejšie popíšem obidve časti projektu.
+
+## Visualization
+
+Pre spustenie GUI je potrebné spustiť project_root/visualization/main.py.
+Po vyplnení správnych prihlasovacích údajov do databázy v connection window a úspešnom pripojení k
+databáze sa otvorí main window. Najprv je potrebné v časti Fact table selection vybrať jednu z 
+ponúkaných faktových tabuliek a kliknúť na tlačidlo Show. Následne sa v časti Plot configuration
+zobrazia všetky senzory a metriky prítomné vo vybranej faktovej tabuľke. Pre zobrazenie grafu je potrebné:
+    - zvoliť začiatočný a konečný dátum,
+    - zvoliť senzory a metriky v kombináciách 1. aspoň jeden senzor a od jedna po desať metrík, 2. aspoň 
+    jeden senzor a práve jedna metrika,
+    - stlačiť tlačidlo Load.
+Pre zmenu spojenia ku databáze je potrebné stlačiť tlačidlo Set connection. Aplikácia sa ukončuje klasicky stlačním krížika v pravom hornom rohu okna.
+
+## ETL
+
 ## Requirements
 
 - Python 3.10+
