@@ -5,9 +5,9 @@ from src.meta_data_reader import MetaDataReader
 
 class QueryService:
 
-    def __init__(self):
+    def __init__(self, shared_config):
         self._conn_manager = DBConnectionManager()
-        self._meta_data_reader = MetaDataReader()
+        self._meta_data_reader = MetaDataReader(shared_config)
 
     def get_data_one_sensor_many_metrics(self, fct_table, sensor, metrics, start, end):
 

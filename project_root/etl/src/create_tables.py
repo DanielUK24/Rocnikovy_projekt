@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from psycopg import sql
 
-def create_tables(config):
+def create_tables(config, shared_config):
 
     # initializing variables for table names (spaces are replaced by _)
     dim_sensors_table_name = config["target_dimensions"]["dim_sensors"]["target_table"].replace(" ", "_")
@@ -59,55 +59,61 @@ def create_tables(config):
             # truncating tables for sensor and date dimensions
 
             cur.execute(
-                sql.SQL("TRUNCATE TABLE {}").format(
+                sql.SQL("TRUNCATE TABLE {} CASCADE").format(
                     sql.Identifier(dim_sensors_table_name)
                     )
             )
 
             cur.execute(
-                sql.SQL("TRUNCATE TABLE {}").format(
+                sql.SQL("TRUNCATE TABLE {} CASCADE").format(
                     sql.Identifier(dim_dates_table_name)
                     )
             )
 
             # commenting tables and columns for sensor dimension and date dimensions
             cur.execute(
-                sql.SQL("COMMENT ON TABLE {} IS 'dim_sensors';").format(
-                    sql.Identifier(dim_sensors_table_name)
-                )
-            )
-
-            cur.execute(
-                sql.SQL("COMMENT ON COLUMN {}.{} IS 'sensor_id';").format(
+                sql.SQL("COMMENT ON TABLE {} IS {};").format(
                     sql.Identifier(dim_sensors_table_name),
-                    sql.Identifier(dim_sensors_id_column)
+                    sql.Literal(shared_config["dim_sensors_table_code"])
                 )
             )
 
             cur.execute(
-                sql.SQL("COMMENT ON COLUMN {}.{} IS 'name';").format(
+                sql.SQL("COMMENT ON COLUMN {}.{} IS {};").format(
                     sql.Identifier(dim_sensors_table_name),
-                    sql.Identifier(dim_sensors_sensor_column)
+                    sql.Identifier(dim_sensors_id_column),
+                    sql.Literal(shared_config["dim_sensors_id_column"])
                 )
             )
 
             cur.execute(
-                sql.SQL("COMMENT ON TABLE {} IS 'dim_dates';").format(
-                    sql.Identifier(dim_dates_table_name)
+                sql.SQL("COMMENT ON COLUMN {}.{} IS {};").format(
+                    sql.Identifier(dim_sensors_table_name),
+                    sql.Identifier(dim_sensors_sensor_column),
+                    sql.Literal(shared_config["dim_sensors_name_column"])
                 )
             )
 
             cur.execute(
-                sql.SQL("COMMENT ON COLUMN {}.{} IS 'date_id';").format(
+                sql.SQL("COMMENT ON TABLE {} IS {};").format(
                     sql.Identifier(dim_dates_table_name),
-                    sql.Identifier(dim_dates_id_column)
+                    sql.Literal(shared_config["dim_dates_table_code"])
                 )
             )
 
             cur.execute(
-                sql.SQL("COMMENT ON COLUMN {}.{} IS 'date';").format(
+                sql.SQL("COMMENT ON COLUMN {}.{} IS {};").format(
                     sql.Identifier(dim_dates_table_name),
-                    sql.Identifier(dim_dates_date_column)
+                    sql.Identifier(dim_dates_id_column),
+                    sql.Literal(shared_config["dim_dates_id_column"])
+                )
+            )
+
+            cur.execute(
+                sql.SQL("COMMENT ON COLUMN {}.{} IS {};").format(
+                    sql.Identifier(dim_dates_table_name),
+                    sql.Identifier(dim_dates_date_column),
+                    sql.Literal(shared_config["dim_dates_date_column"])
                 )
             )
 
@@ -153,29 +159,23 @@ def create_tables(config):
                                                     dim_sensors = sql.Identifier(dim_sensors_table_name),
                                                     dim_dates = sql.Identifier(dim_dates_table_name)
                                                 )
-                
-                query_fct_measurements_comment = sql.SQL("""
-                                                comment on column {table_name}.{timestamp_column} is 'timestamp';
-                                                """).format(
-                                                    table_name = sql.Identifier(fct_table_name),
-                                                    timestamp_column = sql.Identifier(fct_table_timestamp_column),
-                                                )
 
                 cur.execute(query_fct_measurements)
-                cur.execute(query_fct_measurements_comment)
 
                 # commenting fact table
                 cur.execute(
-                    sql.SQL("COMMENT ON TABLE {} IS 'fct';").format(
-                        sql.Identifier(fct_table_name)
+                    sql.SQL("COMMENT ON TABLE {} IS {};").format(
+                        sql.Identifier(fct_table_name),
+                        sql.Literal(shared_config["fct_table_code"])
                     )
                 )
 
                 # commenting column
                 cur.execute(
-                    sql.SQL("COMMENT ON COLUMN {}.{} IS 'timestamp';").format(
+                    sql.SQL("COMMENT ON COLUMN {}.{} IS {};").format(
                         sql.Identifier(fct_table_name),
-                        sql.Identifier(fct_table_timestamp_column)
+                        sql.Identifier(fct_table_timestamp_column),
+                        sql.Literal(shared_config["timestamp_column"])
                     )
                 )
 

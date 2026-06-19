@@ -4,8 +4,16 @@ from src.db_conn_manager import DBConnectionManager
 
 class MetaDataReader:
 
-    def __init__(self):
+    def __init__(self, shared_config):
         self._conn_manager = DBConnectionManager()
+        self._dim_sensors_table_code = shared_config["dim_sensors_table_code"]
+        self._dim_sensors_id_column = shared_config["dim_sensors_id_column"]
+        self._dim_sensors_name_column = shared_config["dim_sensors_name_column"]
+        self._dim_dates_table_code = shared_config["dim_dates_table_code"]
+        self._dim_dates_id_column = shared_config["dim_dates_id_column"]
+        self._dim_dates_date_column = shared_config["dim_dates_date_column"]
+        self._fct_table_code = shared_config["fct_table_code"]
+        self._timestamp_column = shared_config["timestamp_column"]
 
     def get_fct_tables(self):
         
@@ -21,7 +29,7 @@ class MetaDataReader:
         """
 
         with self._conn_manager.get_connection().cursor() as cur:
-            cur.execute(query, ("fct",))
+            cur.execute(query, (self._fct_table_code,))
             rows = cur.fetchall()
 
         return [row[0] for row in rows]
@@ -72,35 +80,35 @@ class MetaDataReader:
                     AND con.contype = 'f'
                 )
 
-                AND (d.description IS NULL OR d.description != 'timestamp');
+                AND (d.description IS NULL OR d.description != %s);
         """
 
         with self._conn_manager.get_connection().cursor() as cur:
-            cur.execute(query, (fct_table,))
+            cur.execute(query, (fct_table, self._timestamp_column))
             rows = cur.fetchall()
 
         return [row[0] for row in rows]
 
     def get_timestamp_column(self, fct_table):
-        return self._find_column_in_table_by_comment(fct_table, "timestamp")
+        return self._find_column_in_table_by_comment(fct_table, self._timestamp_column)
 
     def get_dim_sensors(self):
-        return self._find_table_by_comment("dim_sensors")
+        return self._find_table_by_comment(self._dim_sensors_table_code)
 
     def get_dim_sensors_id(self):
-        return self._find_column_in_table_by_comment(self.get_dim_sensors(), "sensor_id")
+        return self._find_column_in_table_by_comment(self.get_dim_sensors(), self._dim_sensors_id_column)
 
     def get_dim_sensors_name(self):
-        return self._find_column_in_table_by_comment(self.get_dim_sensors(), "name")
+        return self._find_column_in_table_by_comment(self.get_dim_sensors(), self._dim_sensors_name_column)
 
     def get_dim_dates(self):
-        return self._find_table_by_comment("dim_dates")
+        return self._find_table_by_comment(self._dim_dates_table_code)
 
     def get_dim_dates_id(self):
-        return self._find_column_in_table_by_comment(self.get_dim_dates(), "date_id")
+        return self._find_column_in_table_by_comment(self.get_dim_dates(), self._dim_dates_id_column)
 
     def get_dim_dates_date(self):
-        return self._find_column_in_table_by_comment(self.get_dim_dates(), "date")
+        return self._find_column_in_table_by_comment(self.get_dim_dates(), self._dim_dates_date_column)
 
     def _find_table_by_comment(self, comment):
 

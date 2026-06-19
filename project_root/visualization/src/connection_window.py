@@ -1,15 +1,23 @@
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QLineEdit, QPushButton, QToolButton, QGroupBox
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QCloseEvent
 
 from src.db_conn_manager import DBConnectionManager
+from src.main_window import CustomDialog
 
 class ConnectionWindow(QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.setFixedSize(350,350)
         self._conn_manager = DBConnectionManager()
         self.setWindowTitle('Visualizator')
         self._build_ui()
+    
+    def closeEvent(self, event: QCloseEvent):
+        if not self._main_window.isVisible():
+            self._conn_manager.close_connection_if_exists()
+        event.accept()
 
     def set_main_window(self, main_window):
         self._main_window = main_window
@@ -59,13 +67,6 @@ class ConnectionWindow(QMainWindow):
         connect_button.clicked.connect(self._on_connect_clicked)
         connection_layout.addWidget(connect_button,30,0)
 
-        # autofill
-        self._host_line.setText("localhost")
-        self._port_line.setText("5432")
-        self._database_line.setText("postgres")
-        self._username_line.setText("postgres")
-        self._password_line.setText("mojpostgres2025")
-
     def set_inputs(self, connection_data):
         self._host_line.setText(connection_data.host)
         self._port_line.setText(connection_data.port)
@@ -81,12 +82,13 @@ class ConnectionWindow(QMainWindow):
 
         try:
             self._conn_manager.init(host, port, database, username, password)
-            self.close()
-            self._main_window.show()
         except:
-            print("chybne prihlasovacie udaje")
-            # zavolanie error handlera na odhandlovanie chyby
-
+            dlg = CustomDialog(self, "Could not connect to database")
+            dlg.exec()
+        else:
+            self._main_window.show()
+            self._password_line.setText("")
+            self.close()
 
     def _toggle_password(self):
         if (self._password_line.echoMode() == QLineEdit.Password):

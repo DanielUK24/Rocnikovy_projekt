@@ -1,12 +1,12 @@
 {
   "chunk_size": 30,
   "max_approximated": 5,
-  "codelist_path": "data/raw/Beach_Water_and_Weather_Sensor_Locations_20251218.csv",
+  "codelist_path": "data/Beach_Water_and_Weather_Sensor_Locations_20251218.csv",
   "measurements": [
     {
       "id": 0,
       "type":"Water", 
-      "path": "data/raw/water_cca_300_lines.csv",
+      "path": "data/water_cca_300_lines.csv",
       "source_column_for_dim_sensors": "Beach Name",
       "source_column_for_dim_dates": "Measurement Timestamp",
       "target_facts": {
@@ -48,7 +48,7 @@
     {
       "id": 1,
       "type":"Water", 
-      "path": "data/raw/Beach_Water_Quality_-_Automated_Sensors_20251016.csv",
+      "path": "data/Beach_Water_Quality_-_Automated_Sensors_20251016.csv",
       "source_column_for_dim_sensors": "Beach Name",
       "source_column_for_dim_dates": "Measurement Timestamp",
       "target_facts": {
@@ -90,7 +90,7 @@
     {
       "id": 2,
       "type":"Weather", 
-      "path": "data/raw/Beach_Weather_Stations_-_Automated_Sensors_20251016.csv",
+      "path": "data/Beach_Weather_Stations_-_Automated_Sensors_20251016.csv",
       "source_column_for_dim_sensors": "Station Name",
       "source_column_for_dim_dates": "Measurement Timestamp",
       "target_facts": {

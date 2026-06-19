@@ -1,0 +1,10 @@
+{
+    "dim_sensors_table_code": "DIM_SENSORS",
+    "dim_sensors_id_column": "SENSOR_ID",
+    "dim_sensors_name_column": "NAME",
+    "dim_dates_table_code": "DIM_DATES",
+    "dim_dates_id_column": "DATE_ID",
+    "dim_dates_date_column": "DATE",
+    "fct_table_code": "FCT",
+    "timestamp_column": "TIMESTAMP"
+}
